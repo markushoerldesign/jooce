@@ -1,7 +1,6 @@
 // ── Config – trage hier deine eigenen Werte ein ──
 const SUPABASE_URL = "https://rhthtidolapnfrmmsojs.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJodGh0aWRvbGFwbmZybW1zb2pzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MTE3OTAsImV4cCI6MjA5NTk4Nzc5MH0.YT8qp6ierdW4DoiquaSf-DkEU_wJjEtsWVp66SngZec";
-const ANTHROPIC_KEY = "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";
 
 // ── State ──
 let maxPicks = 1, myPicks = [], answers = [], question = '';
@@ -124,7 +123,7 @@ function init() {
 }
 init();
 
-// ── KI: direct Anthropic API call ──
+// ── KI: call Supabase Edge Function ──
 async function genOne(btn) {
   const row = btn.parentElement;
   const input = row.querySelector('input');
@@ -136,26 +135,18 @@ async function genOne(btn) {
     .map(i => i.value.trim()).filter(Boolean);
 
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/generate`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': ANTHROPIC_KEY,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true'
+        'Authorization': `Bearer ${SUPABASE_KEY}`
       },
-      body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
-        max_tokens: 100,
-        messages: [{
-          role: 'user',
-          content: `Generiere eine einzige Antwortmöglichkeit für die Frage: "${q}". Vorhandene Antworten: ${existing.join(', ')}. Passe die Länge an die vorhandenen Antworten an. Antworte NUR mit dem Text, ohne Anführungszeichen oder Erklärung.`
-        }]
-      })
+      body: JSON.stringify({ question: q, existing })
     });
     const data = await res.json();
-    input.value = data.content?.[0]?.text?.trim() || '';
+    input.value = data.answer || '';
   } catch(e) {
+    // Fallback to local pool
     const pool = detectPoolLocal(q, existing);
     const avail = pool.filter(p => !existing.includes(p));
     input.value = (avail.length ? avail : pool)[Math.floor(Math.random() * (avail.length || pool.length))];
