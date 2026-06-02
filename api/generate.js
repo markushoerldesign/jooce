@@ -19,7 +19,7 @@ Regeln:
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': process.env.ANTHROPIC_API_KEY,
+        'x-api-key': "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",
         'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
