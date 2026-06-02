@@ -1,6 +1,7 @@
-// ── Supabase Config – trage hier deine eigenen Werte ein ──
-const SUPABASE_URL = 'https://rhthtidolapnfrmmsojs.supabase.co';
+// ── Config – trage hier deine eigenen Werte ein ──
+const SUPABASE_URL = "https://rhthtidolapnfrmmsojs.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJodGh0aWRvbGFwbmZybW1zb2pzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MTE3OTAsImV4cCI6MjA5NTk4Nzc5MH0.YT8qp6ierdW4DoiquaSf-DkEU_wJjEtsWVp66SngZec";
+const ANTHROPIC_KEY = "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";
 
 // ── State ──
 let maxPicks = 1, myPicks = [], answers = [], question = '';
@@ -48,7 +49,7 @@ function glassIcon(filled) {
 
 // ── Big glass for result screen ──
 function bigGlassIcon() {
-  return `<svg width="64" height="74" viewBox="0 0 64 74" fill="none" xmlns="http://www.w3.org/2000/svg">
+  return `<svg width="64" height="74" viewBox="0 0 64 74" fill="none">
     <defs><clipPath id="bgc"><rect x="6" y="12" width="52" height="54" rx="6"/></clipPath></defs>
     <rect x="6" y="12" width="52" height="54" rx="6" fill="#FFF3E8" stroke="#F97316" stroke-width="2"/>
     <path d="M14 12 L11 3 L53 3 L50 12" stroke="#F97316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
@@ -101,7 +102,6 @@ function makeChoiceRow(text, origI, bSelArr, maxP) {
       if (i > -1) bSelArr.splice(i, 1);
     } else {
       if (bSelArr.length >= maxP) {
-        // deselect oldest
         const oldIdx = bSelArr.shift();
         const oldEl = document.querySelector(`.b-glass[data-idx="${oldIdx}"]`);
         if (oldEl) { oldEl.dataset.filled = '0'; oldEl.innerHTML = glassIcon(false); }
@@ -118,37 +118,39 @@ function init() {
   const list = document.getElementById('answers-list');
   list.innerHTML = '';
   for (let i = 1; i <= 4; i++) list.appendChild(makeRow(i));
-
   const params = new URLSearchParams(window.location.search);
   const qId = params.get('q');
   if (qId) loadPersonB(qId);
 }
 init();
 
-// ── KI: call Vercel serverless function ──
+// ── KI: direct Anthropic API call ──
 async function genOne(btn) {
-  const row   = btn.parentElement;
+  const row = btn.parentElement;
   const input = row.querySelector('input');
   btn.classList.add('loading');
   btn.innerHTML = '<span class="spinning" style="font-size:13px">↻</span>';
 
   const q = document.getElementById('q-input').value.trim();
-  const existing = Array.from(document.getElementById('answers-list')
-    .querySelectorAll('input')).map(i => i.value.trim()).filter(Boolean);
+  const existing = Array.from(document.getElementById('answers-list').querySelectorAll('input'))
+    .map(i => i.value.trim()).filter(Boolean);
 
-try {
+  try {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': "DEIN-ANTHROPIC-KEY",
+        'x-api-key': ANTHROPIC_KEY,
         'anthropic-version': '2023-06-01',
         'anthropic-dangerous-direct-browser-access': 'true'
       },
       body: JSON.stringify({
         model: 'claude-haiku-4-5-20251001',
         max_tokens: 100,
-        messages: [{ role: 'user', content: `Generiere eine einzige kurze Antwort für die Frage: "${document.getElementById('q-input').value}". Vorhandene Antworten: ${Array.from(document.getElementById('answers-list').querySelectorAll('input')).map(i=>i.value).filter(Boolean).join(', ')}. Antworte NUR mit dem Text, keine Erklärung.` }]
+        messages: [{
+          role: 'user',
+          content: `Generiere eine einzige Antwortmöglichkeit für die Frage: "${q}". Vorhandene Antworten: ${existing.join(', ')}. Passe die Länge an die vorhandenen Antworten an. Antworte NUR mit dem Text, ohne Anführungszeichen oder Erklärung.`
+        }]
       })
     });
     const data = await res.json();
@@ -158,6 +160,12 @@ try {
     const avail = pool.filter(p => !existing.includes(p));
     input.value = (avail.length ? avail : pool)[Math.floor(Math.random() * (avail.length || pool.length))];
   }
+
+  btn.classList.remove('loading');
+  btn.innerHTML = '<i class="ti ti-sparkles"></i>';
+  input.style.borderColor = '#F97316';
+  setTimeout(() => input.style.borderColor = '', 800);
+}
 
 function detectPoolLocal(q, existing) {
   const pools = {
@@ -203,6 +211,7 @@ function addRow() {
   const list = document.getElementById('answers-list');
   list.appendChild(makeRow(list.querySelectorAll('.answer-row').length + 1));
 }
+
 function delRow(btn) {
   const list = document.getElementById('answers-list');
   if (list.querySelectorAll('.answer-row').length > 2)
@@ -283,7 +292,6 @@ function copyLink() {
 // ── Person B: load from URL ──
 async function loadPersonB(qId) {
   document.getElementById('phase-create').style.display = 'none';
-
   try {
     const data = await sbFetch(`sessions?id=eq.${qId}&select=*`);
     if (!data || !data[0]) {
@@ -344,8 +352,6 @@ async function submitB() {
 // ── Show result (both A and B) ──
 function showResult(bSel) {
   const matches = myPicks.filter(i => bSel.includes(i));
-
-  // Build result screen
   const matchCount = matches.length;
   const resultEl = document.getElementById('phase-result');
 
@@ -371,7 +377,7 @@ function showResult(bSel) {
       <div class="result-sub">
         ${matchCount === 0
           ? 'Ihr habt diesmal nichts Gemeinsames gewählt 🤔'
-          : matches.length === Math.max(myPicks.length, bSel.length)
+          : matchCount === Math.max(myPicks.length, bSel.length)
             ? 'Perfektes Match – ihr denkt genau gleich! 🎉'
             : 'Das habt ihr beide gewählt:'}
       </div>
