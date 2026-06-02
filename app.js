@@ -19,36 +19,12 @@ async function sbFetch(path, options = {}) {
       ...options.headers
     }
   });
-  if (!res.ok) {
-    const err = await res.text();
-    throw new Error(err);
-  }
   const text = await res.text();
   return text ? JSON.parse(text) : null;
 }
 
-// ── Generate unique ID ──
 function makeId() {
   return Math.random().toString(36).slice(2, 8);
-}
-
-// ── Answer pools for KI ──
-const pools = {
-  s_machen: ['Kino', 'Zuhause', 'Spazieren', 'Freunde treffen', 'Sport', 'Restaurant', 'Kochen', 'Konzert'],
-  l_machen: ['Ich würde gerne ins Kino gehen', 'Lieber zu Hause bleiben', 'Einen Spaziergang machen', 'Freunde treffen', 'Sport machen', 'In ein Restaurant gehen'],
-  s_essen:  ['Pizza', 'Sushi', 'Pasta', 'Burger', 'Salat', 'Thai', 'Ramen', 'Döner'],
-  l_essen:  ['Ich hätte Lust auf Pizza', 'Sushi wäre perfekt', 'Pasta geht immer', 'Ein saftiger Burger'],
-  def:      ['Option A', 'Option B', 'Option C', 'Option D', 'Option E'],
-};
-
-function detectPool() {
-  const q = document.getElementById('q-input').value.toLowerCase();
-  const vals = Array.from(document.getElementById('answers-list').querySelectorAll('input'))
-    .map(i => i.value.trim()).filter(Boolean);
-  const long = vals.some(v => v.split(' ').length > 3);
-  if (q.match(/machen|heute|abend|wochenende|plan/)) return long ? pools.l_machen : pools.s_machen;
-  if (q.match(/essen|food|hunger|kochen|resto/))     return long ? pools.l_essen  : pools.s_essen;
-  return pools.def;
 }
 
 // ── Glass SVG icon ──
@@ -63,14 +39,28 @@ function glassIcon(filled) {
     ${filled
       ? `<rect x="2" y="13" width="18" height="10" fill="#FDBA74" opacity="0.85" clip-path="url(#${id})"/>
          <path d="M4 13 Q11 10 18 13" stroke="#F97316" stroke-width="0.8" stroke-linecap="round" fill="none" opacity="0.6"/>
-         <circle cx="8"  cy="17" r="1.2" fill="#F97316" opacity="0.35"/>
+         <circle cx="8" cy="17" r="1.2" fill="#F97316" opacity="0.35"/>
          <circle cx="13" cy="19" r="0.9" fill="#F97316" opacity="0.3"/>`
       : `<path d="M6 13 Q11 17 16 13" stroke="#F97316" stroke-width="1" stroke-linecap="round" fill="none" opacity="0.4"/>`
     }
   </svg>`;
 }
 
-// ── Build an answer row ──
+// ── Big glass for result screen ──
+function bigGlassIcon() {
+  return `<svg width="64" height="74" viewBox="0 0 64 74" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <defs><clipPath id="bgc"><rect x="6" y="12" width="52" height="54" rx="6"/></clipPath></defs>
+    <rect x="6" y="12" width="52" height="54" rx="6" fill="#FFF3E8" stroke="#F97316" stroke-width="2"/>
+    <path d="M14 12 L11 3 L53 3 L50 12" stroke="#F97316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    <rect x="6" y="40" width="52" height="26" fill="#FDBA74" opacity="0.85" clip-path="url(#bgc)"/>
+    <path d="M10 40 Q32 33 54 40" stroke="#F97316" stroke-width="1.5" stroke-linecap="round" fill="none" opacity="0.7"/>
+    <circle cx="22" cy="52" r="3.5" fill="#F97316" opacity="0.35"/>
+    <circle cx="38" cy="57" r="2.5" fill="#F97316" opacity="0.3"/>
+    <circle cx="46" cy="49" r="2" fill="#F97316" opacity="0.25"/>
+  </svg>`;
+}
+
+// ── Build answer row (Person A) ──
 function makeRow(n) {
   const row = document.createElement('div');
   row.className = 'answer-row';
@@ -90,67 +80,124 @@ function makeRow(n) {
   return row;
 }
 
+// ── Build answer choice (Person B) – same glass design ──
+function makeChoiceRow(text, origI, bSelArr, maxP) {
+  const d = document.createElement('div');
+  d.className = 'answer-row';
+  d.innerHTML = `
+    <div class="add-spacer"></div>
+    <div class="glass-check b-glass" data-filled="0" data-idx="${origI}" title="Antwort wählen">
+      ${glassIcon(false)}
+    </div>
+    <div class="answer-field">
+      <input type="text" value="${text}" disabled style="cursor:default;" />
+    </div>`;
+  d.querySelector('.b-glass').onclick = function() {
+    const filled = this.dataset.filled === '1';
+    if (filled) {
+      this.dataset.filled = '0';
+      this.innerHTML = glassIcon(false);
+      const i = bSelArr.indexOf(origI);
+      if (i > -1) bSelArr.splice(i, 1);
+    } else {
+      if (bSelArr.length >= maxP) {
+        // deselect oldest
+        const oldIdx = bSelArr.shift();
+        const oldEl = document.querySelector(`.b-glass[data-idx="${oldIdx}"]`);
+        if (oldEl) { oldEl.dataset.filled = '0'; oldEl.innerHTML = glassIcon(false); }
+      }
+      this.dataset.filled = '1';
+      this.innerHTML = glassIcon(true);
+      bSelArr.push(origI);
+    }
+  };
+  return d;
+}
+
 function init() {
   const list = document.getElementById('answers-list');
   list.innerHTML = '';
   for (let i = 1; i <= 4; i++) list.appendChild(makeRow(i));
 
-  // Check if we are Person B (URL has ?q=...)
   const params = new URLSearchParams(window.location.search);
   const qId = params.get('q');
   if (qId) loadPersonB(qId);
 }
 init();
 
-// ── KI generate single answer ──
-function genOne(btn) {
+// ── KI: call Vercel serverless function ──
+async function genOne(btn) {
   const row   = btn.parentElement;
   const input = row.querySelector('input');
   btn.classList.add('loading');
   btn.innerHTML = '<span class="spinning" style="font-size:13px">↻</span>';
-  setTimeout(() => {
-    const pool  = detectPool();
-    const used  = Array.from(document.getElementById('answers-list').querySelectorAll('input'))
-                    .map(i => i.value.trim()).filter(Boolean);
+
+  const q = document.getElementById('q-input').value.trim();
+  const existing = Array.from(document.getElementById('answers-list')
+    .querySelectorAll('input')).map(i => i.value.trim()).filter(Boolean);
+
+  try {
+    const res = await fetch('/api/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ question: q, existing })
+    });
+    const data = await res.json();
+    input.value = data.answer || '';
+  } catch (e) {
+    // Fallback to local pool if API fails
+    const pool = detectPoolLocal(q, existing);
+    const used = existing;
     const avail = pool.filter(p => !used.includes(p));
     input.value = (avail.length ? avail : pool)[Math.floor(Math.random() * (avail.length || pool.length))];
-    btn.classList.remove('loading');
-    btn.innerHTML = '<i class="ti ti-sparkles"></i>';
-    input.style.borderColor = '#F97316';
-    setTimeout(() => input.style.borderColor = '', 800);
-  }, 500 + Math.random() * 400);
+  }
+
+  btn.classList.remove('loading');
+  btn.innerHTML = '<i class="ti ti-sparkles"></i>';
+  input.style.borderColor = '#F97316';
+  setTimeout(() => input.style.borderColor = '', 800);
 }
 
-// ── Toggle glass check ──
+function detectPoolLocal(q, existing) {
+  const pools = {
+    s_machen: ['Kino','Zuhause','Spazieren','Freunde treffen','Sport','Restaurant','Kochen','Konzert'],
+    l_machen: ['Ich würde gerne ins Kino gehen','Lieber zu Hause bleiben','Einen Spaziergang machen','Freunde treffen','Sport machen','In ein Restaurant gehen'],
+    s_essen:  ['Pizza','Sushi','Pasta','Burger','Salat','Thai','Ramen','Döner'],
+    l_essen:  ['Ich hätte Lust auf Pizza','Sushi wäre perfekt','Pasta geht immer','Ein saftiger Burger'],
+    def:      ['Option A','Option B','Option C','Option D','Option E'],
+  };
+  const long = existing.some(v => v.split(' ').length > 3);
+  const ql = (q || '').toLowerCase();
+  if (ql.match(/machen|heute|abend|wochenende|plan/)) return long ? pools.l_machen : pools.s_machen;
+  if (ql.match(/essen|food|hunger|kochen|resto/))     return long ? pools.l_essen  : pools.s_essen;
+  return pools.def;
+}
+
+// ── Toggle glass check (Person A) ──
 function toggleCheck(el) {
-  const rows   = Array.from(document.getElementById('answers-list').querySelectorAll('.answer-row'));
-  const idx    = rows.indexOf(el.closest('.answer-row'));
+  const rows = Array.from(document.getElementById('answers-list').querySelectorAll('.answer-row'));
+  const idx  = rows.indexOf(el.closest('.answer-row'));
   const filled = el.dataset.filled === '1';
   if (filled) {
-    el.dataset.filled = '0';
-    el.innerHTML = glassIcon(false);
+    el.dataset.filled = '0'; el.innerHTML = glassIcon(false);
     myPicks = myPicks.filter(x => x !== idx);
   } else {
     if (myPicks.length >= maxPicks) {
-      const old   = myPicks.shift();
+      const old = myPicks.shift();
       const oldEl = rows[old].querySelector('.glass-check');
-      oldEl.dataset.filled = '0';
-      oldEl.innerHTML = glassIcon(false);
+      oldEl.dataset.filled = '0'; oldEl.innerHTML = glassIcon(false);
     }
-    el.dataset.filled = '1';
-    el.innerHTML = glassIcon(true);
+    el.dataset.filled = '1'; el.innerHTML = glassIcon(true);
     myPicks.push(idx);
   }
 }
 
-// ── Count +/- ──
 function chgCount(d) {
   const n = document.getElementById('answers-list').querySelectorAll('.answer-row').length;
   maxPicks = Math.max(1, Math.min(n, maxPicks + d));
   document.getElementById('count-num').textContent = maxPicks;
 }
 
-// ── Add / delete rows ──
 function addRow() {
   const list = document.getElementById('answers-list');
   list.appendChild(makeRow(list.querySelectorAll('.answer-row').length + 1));
@@ -161,12 +208,12 @@ function delRow(btn) {
     btn.closest('.answer-row').remove();
 }
 
-// ── Generate real link & save to Supabase ──
+// ── Generate link & save ──
 async function generateLink() {
   question = document.getElementById('q-input').value.trim() || 'Was möchtest du heute machen?';
   const rows = Array.from(document.getElementById('answers-list').querySelectorAll('.answer-row'));
   answers = rows.map(r => r.querySelector('input').value.trim()).filter(Boolean);
-  if (!answers.length) answers = ['Kino', 'Restaurant', 'Zuhause', 'Spazieren'];
+  if (!answers.length) { alert('Bitte füge mindestens eine Antwort hinzu!'); return; }
   if (!myPicks.length) { alert('Bitte wähle mindestens eine Antwort!'); return; }
 
   const btn = document.getElementById('gen-link-btn');
@@ -178,28 +225,20 @@ async function generateLink() {
     await sbFetch('sessions', {
       method: 'POST',
       prefer: 'return=minimal',
-      body: JSON.stringify({
-        id: sessionId,
-        question,
-        answers,
-        picks_a: myPicks,
-        max_picks: maxPicks
-      })
+      body: JSON.stringify({ id: sessionId, question, answers, picks_a: myPicks, max_picks: maxPicks })
     });
 
-    // Lock inputs
     document.getElementById('answers-list').querySelectorAll('input').forEach(i => i.disabled = true);
     document.getElementById('answers-list').querySelectorAll('.ai-btn,.del-btn,.glass-check')
       .forEach(b => b.style.pointerEvents = 'none');
-    document.querySelector('.add-row').style.display   = 'none';
-    document.querySelector('.info-box').style.display  = 'none';
+    document.querySelector('.add-row').style.display  = 'none';
+    document.querySelector('.info-box').style.display = 'none';
     btn.style.display = 'none';
 
     const link = `${window.location.origin}${window.location.pathname}?q=${sessionId}`;
     document.getElementById('link-display').textContent = link;
     document.getElementById('phase-waiting').style.display = 'block';
     startCountdown();
-
   } catch (e) {
     alert('Fehler beim Speichern: ' + e.message);
     btn.innerHTML = '<i class="ti ti-link"></i> Link generieren';
@@ -207,7 +246,7 @@ async function generateLink() {
   }
 }
 
-// ── Countdown & auto-refresh ──
+// ── Countdown & polling ──
 function startCountdown() {
   countdownSec = 30;
   document.getElementById('countdown').textContent = '30s';
@@ -215,23 +254,20 @@ function startCountdown() {
   countdownTimer = setInterval(async () => {
     countdownSec--;
     document.getElementById('countdown').textContent = countdownSec + 's';
-    if (countdownSec <= 0) {
-      countdownSec = 30;
-      // Auto check if Person B has answered
-      await checkForResult();
-    }
+    if (countdownSec <= 0) { countdownSec = 30; await checkForResult(); }
   }, 1000);
 }
 
 async function checkForResult() {
   if (!sessionId) return;
-  try {
-    const data = await sbFetch(`sessions?id=eq.${sessionId}&select=picks_b`);
-    if (data && data[0] && data[0].picks_b) {
-      clearInterval(countdownTimer);
-      showResult(data[0].picks_b);
-    }
-  } catch (e) { console.log('Check error:', e); }
+  const data = await sbFetch(`sessions?id=eq.${sessionId}&select=picks_b,answers,question`);
+  if (data && data[0] && data[0].picks_b) {
+    clearInterval(countdownTimer);
+    answers  = data[0].answers;
+    question = data[0].question;
+    document.getElementById('phase-waiting').style.display = 'none';
+    showResult(data[0].picks_b);
+  }
 }
 
 function copyLink() {
@@ -243,30 +279,24 @@ function copyLink() {
   });
 }
 
-// ── Person B: load session from URL ──
+// ── Person B: load from URL ──
 async function loadPersonB(qId) {
-  // Hide create phase, show loading
   document.getElementById('phase-create').style.display = 'none';
 
   try {
     const data = await sbFetch(`sessions?id=eq.${qId}&select=*`);
     if (!data || !data[0]) {
-      document.body.innerHTML = '<div style="padding:2rem;font-family:sans-serif;">Link ungültig oder abgelaufen.</div>';
+      document.body.innerHTML = '<div style="padding:2rem;font-family:sans-serif;text-align:center;"><br><br>❌ Link ungültig oder abgelaufen.</div>';
       return;
     }
     const session = data[0];
+    if (session.picks_b) { showResultPage(session); return; }
 
-    // Already answered?
-    if (session.picks_b) {
-      showResultPage(session);
-      return;
-    }
-
-    sessionId  = qId;
-    answers    = session.answers;
-    myPicks    = session.picks_a;
-    maxPicks   = session.max_picks;
-    question   = session.question;
+    sessionId = qId;
+    answers   = session.answers;
+    myPicks   = session.picks_a;
+    maxPicks  = session.max_picks;
+    question  = session.question;
 
     document.getElementById('q-display-b').textContent = question;
     document.getElementById('q-meta-b').textContent    = `Wähle bis zu ${maxPicks} Antwort${maxPicks > 1 ? 'en' : ''}`;
@@ -277,28 +307,12 @@ async function loadPersonB(qId) {
     bc.innerHTML = '';
     shuffled.forEach(a => {
       const origI = answers.indexOf(a);
-      const d = document.createElement('div');
-      d.className = 'answer-choice';
-      d.innerHTML = `<i class="ti ti-circle" style="font-size:18px;color:#F97316"></i> ${a}`;
-      d.onclick = () => {
-        if (d.classList.contains('selected')) {
-          d.classList.remove('selected');
-          d.querySelector('i').className = 'ti ti-circle';
-          bSel = bSel.filter(x => x !== origI);
-        } else if (bSel.length < maxPicks) {
-          d.classList.add('selected');
-          d.querySelector('i').className = 'ti ti-circle-check';
-          bSel.push(origI);
-        }
-        document.getElementById('b-send-btn')._bSel = bSel;
-      };
-      bc.appendChild(d);
+      bc.appendChild(makeChoiceRow(a, origI, bSel, maxPicks));
     });
     document.getElementById('b-send-btn')._bSel = bSel;
     document.getElementById('phase-personb').style.display = 'block';
-
   } catch (e) {
-    document.body.innerHTML = '<div style="padding:2rem;font-family:sans-serif;">Fehler beim Laden: ' + e.message + '</div>';
+    document.body.innerHTML = '<div style="padding:2rem;font-family:sans-serif;">Fehler: ' + e.message + '</div>';
   }
 }
 
@@ -317,6 +331,7 @@ async function submitB() {
       prefer: 'return=minimal',
       body: JSON.stringify({ picks_b: bSel })
     });
+    document.getElementById('phase-personb').style.display = 'none';
     showResult(bSel);
   } catch (e) {
     alert('Fehler: ' + e.message);
@@ -325,46 +340,52 @@ async function submitB() {
   }
 }
 
-// ── Show result ──
+// ── Show result (both A and B) ──
 function showResult(bSel) {
   const matches = myPicks.filter(i => bSel.includes(i));
-  document.getElementById('q-display-result').textContent = question;
 
-  const mb = document.getElementById('match-banner');
-  if (matches.length === 0) {
-    document.getElementById('match-title').textContent = 'Kein gemeinsames Match';
-    document.getElementById('match-sub').textContent   = 'Ihr habt diesmal nichts Gemeinsames gewählt';
-    mb.style.background  = '#F9FAFB';
-    mb.style.borderColor = '#E5E7EB';
-    document.getElementById('match-title').style.color = '#111827';
-  } else {
-    const perfect = matches.length === Math.max(myPicks.length, bSel.length);
-    document.getElementById('match-title').textContent = perfect
-      ? '🎉 Perfektes Match!'
-      : matches.length === 1 ? '1 gemeinsame Antwort' : `${matches.length} gemeinsame Antworten`;
-    document.getElementById('match-sub').textContent = perfect
-      ? 'Ihr denkt genau gleich!' : 'Das habt ihr beide gewählt';
-  }
+  // Build result screen
+  const matchCount = matches.length;
+  const resultEl = document.getElementById('phase-result');
 
-  const rc = document.getElementById('result-choices');
-  rc.innerHTML = '';
-  answers.forEach((a, i) => {
-    const isMatch = matches.includes(i);
-    const d = document.createElement('div');
-    d.className = 'answer-choice disabled fadein' + (isMatch ? ' match' : ' no-match');
-    d.innerHTML = isMatch
-      ? `<i class="ti ti-circle-check" style="font-size:18px;color:#16A34A"></i> ${a}`
-      : `<i class="ti ti-circle"       style="font-size:18px;color:#9CA3AF"></i> ${a}`;
-    rc.appendChild(d);
+  let matchesHtml = '';
+  matches.forEach(i => {
+    matchesHtml += `
+      <div class="result-match-row fadein">
+        <div class="result-glass">${glassIcon(true)}</div>
+        <span class="result-match-text">${answers[i]}</span>
+      </div>`;
   });
 
-  document.getElementById('phase-personb').style.display = 'none';
-  document.getElementById('phase-waiting').style.display = 'none';
-  document.getElementById('phase-result').style.display  = 'block';
-  document.getElementById('phase-result').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  resultEl.innerHTML = `
+    <div class="result-center">
+      <div class="result-big-glass">${bigGlassIcon()}</div>
+      <div class="result-title">
+        ${matchCount === 0
+          ? 'Kein gemeinsames Match'
+          : matchCount === 1
+            ? '1 gemeinsame Antwort'
+            : `${matchCount} gemeinsame Antworten`}
+      </div>
+      <div class="result-sub">
+        ${matchCount === 0
+          ? 'Ihr habt diesmal nichts Gemeinsames gewählt 🤔'
+          : matches.length === Math.max(myPicks.length, bSel.length)
+            ? 'Perfektes Match – ihr denkt genau gleich! 🎉'
+            : 'Das habt ihr beide gewählt:'}
+      </div>
+      ${matchesHtml}
+      <div class="secret-note" style="margin-top:1.5rem;">
+        <i class="ti ti-lock" style="font-size:13px;flex-shrink:0;margin-top:1px;color:#F97316"></i>
+        Was jeder für sich alleine gewählt hat, bleibt geheim.
+      </div>
+      <button class="secondary-btn" style="margin-top:1rem;" onclick="resetAll()">Neue Frage erstellen</button>
+    </div>`;
+
+  resultEl.style.display = 'block';
+  resultEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-// ── Show result page for already-answered sessions ──
 function showResultPage(session) {
   answers  = session.answers;
   myPicks  = session.picks_a;
@@ -380,11 +401,10 @@ function resetAll() {
   document.getElementById('count-num').textContent = '1';
   document.getElementById('q-input').value = '';
   init();
-  document.querySelector('.add-row').style.display   = '';
-  document.querySelector('.info-box').style.display  = '';
-  document.getElementById('gen-link-btn').style.display  = '';
-  document.getElementById('gen-link-btn').innerHTML  = '<i class="ti ti-link"></i> Link generieren';
-  document.getElementById('gen-link-btn').disabled   = false;
+  document.querySelector('.add-row').style.display  = '';
+  document.querySelector('.info-box').style.display = '';
+  const gb = document.getElementById('gen-link-btn');
+  gb.style.display = ''; gb.innerHTML = '<i class="ti ti-link"></i> Link generieren'; gb.disabled = false;
   document.getElementById('phase-create').style.display  = 'block';
   document.getElementById('phase-waiting').style.display = 'none';
   document.getElementById('phase-personb').style.display = 'none';
