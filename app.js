@@ -136,27 +136,28 @@ async function genOne(btn) {
   const existing = Array.from(document.getElementById('answers-list')
     .querySelectorAll('input')).map(i => i.value.trim()).filter(Boolean);
 
-  try {
-    const res = await fetch('/api/generate', {
+try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ question: q, existing })
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': "DEIN-ANTHROPIC-KEY",
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 100,
+        messages: [{ role: 'user', content: `Generiere eine einzige kurze Antwort für die Frage: "${document.getElementById('q-input').value}". Vorhandene Antworten: ${Array.from(document.getElementById('answers-list').querySelectorAll('input')).map(i=>i.value).filter(Boolean).join(', ')}. Antworte NUR mit dem Text, keine Erklärung.` }]
+      })
     });
     const data = await res.json();
-    input.value = data.answer || '';
-  } catch (e) {
-    // Fallback to local pool if API fails
+    input.value = data.content?.[0]?.text?.trim() || '';
+  } catch(e) {
     const pool = detectPoolLocal(q, existing);
-    const used = existing;
-    const avail = pool.filter(p => !used.includes(p));
+    const avail = pool.filter(p => !existing.includes(p));
     input.value = (avail.length ? avail : pool)[Math.floor(Math.random() * (avail.length || pool.length))];
   }
-
-  btn.classList.remove('loading');
-  btn.innerHTML = '<i class="ti ti-sparkles"></i>';
-  input.style.borderColor = '#F97316';
-  setTimeout(() => input.style.borderColor = '', 800);
-}
 
 function detectPoolLocal(q, existing) {
   const pools = {
