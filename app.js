@@ -1,8 +1,39 @@
+// ── Supabase Config – trage hier deine eigenen Werte ein ──
+const SUPABASE_URL = 'https://rhthtidolapnfrmmsojs.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJodGh0aWRvbGFwbmZybW1zb2pzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MTE3OTAsImV4cCI6MjA5NTk4Nzc5MH0.YT8qp6ierdW4DoiquaSf-DkEU_wJjEtsWVp66SngZec
+';
+
 // ── State ──
 let maxPicks = 1, myPicks = [], answers = [], question = '';
 let countdownTimer = null, countdownSec = 30;
+let sessionId = null;
 
-// ── Answer pools for KI simulation ──
+// ── Supabase Helper ──
+async function sbFetch(path, options = {}) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+    ...options,
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': `Bearer ${SUPABASE_KEY}`,
+      'Content-Type': 'application/json',
+      'Prefer': options.prefer || '',
+      ...options.headers
+    }
+  });
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(err);
+  }
+  const text = await res.text();
+  return text ? JSON.parse(text) : null;
+}
+
+// ── Generate unique ID ──
+function makeId() {
+  return Math.random().toString(36).slice(2, 8);
+}
+
+// ── Answer pools for KI ──
 const pools = {
   s_machen: ['Kino', 'Zuhause', 'Spazieren', 'Freunde treffen', 'Sport', 'Restaurant', 'Kochen', 'Konzert'],
   l_machen: ['Ich würde gerne ins Kino gehen', 'Lieber zu Hause bleiben', 'Einen Spaziergang machen', 'Freunde treffen', 'Sport machen', 'In ein Restaurant gehen'],
@@ -24,7 +55,7 @@ function detectPool() {
 // ── Glass SVG icon ──
 function glassIcon(filled) {
   const id = 'gc' + Math.random().toString(36).slice(2);
-  return `<svg width="22" height="26" viewBox="0 0 22 26" fill="none" xmlns="http://www.w3.org/2000/svg">
+  return `<svg width="22" height="26" viewBox="0 0 22 26" fill="none">
     <defs><clipPath id="${id}"><rect x="2" y="4" width="18" height="19" rx="2"/></clipPath></defs>
     <rect x="2" y="4" width="18" height="19" rx="2"
       fill="${filled ? '#FFF3E8' : '#fff'}" stroke="#F97316" stroke-width="1.3"/>
@@ -64,6 +95,11 @@ function init() {
   const list = document.getElementById('answers-list');
   list.innerHTML = '';
   for (let i = 1; i <= 4; i++) list.appendChild(makeRow(i));
+
+  // Check if we are Person B (URL has ?q=...)
+  const params = new URLSearchParams(window.location.search);
+  const qId = params.get('q');
+  if (qId) loadPersonB(qId);
 }
 init();
 
@@ -126,82 +162,172 @@ function delRow(btn) {
     btn.closest('.answer-row').remove();
 }
 
-// ── Generate link ──
-function generateLink() {
+// ── Generate real link & save to Supabase ──
+async function generateLink() {
   question = document.getElementById('q-input').value.trim() || 'Was möchtest du heute machen?';
   const rows = Array.from(document.getElementById('answers-list').querySelectorAll('.answer-row'));
   answers = rows.map(r => r.querySelector('input').value.trim()).filter(Boolean);
   if (!answers.length) answers = ['Kino', 'Restaurant', 'Zuhause', 'Spazieren'];
   if (!myPicks.length) { alert('Bitte wähle mindestens eine Antwort!'); return; }
 
-  // Lock inputs
-  document.getElementById('answers-list').querySelectorAll('input').forEach(i => i.disabled = true);
-  document.getElementById('answers-list').querySelectorAll('.ai-btn,.del-btn,.glass-check')
-    .forEach(b => b.style.pointerEvents = 'none');
-  document.querySelector('.add-row').style.display   = 'none';
-  document.querySelector('.info-box').style.display  = 'none';
-  document.getElementById('gen-link-btn').style.display = 'none';
+  const btn = document.getElementById('gen-link-btn');
+  btn.innerHTML = '<span class="spinning">↻</span> Wird gespeichert...';
+  btn.disabled = true;
 
-  document.getElementById('link-display').textContent = 'jooce.app/q/x7k2p9';
-  document.getElementById('phase-waiting').style.display = 'block';
-  startCountdown();
+  try {
+    sessionId = makeId();
+    await sbFetch('sessions', {
+      method: 'POST',
+      prefer: 'return=minimal',
+      body: JSON.stringify({
+        id: sessionId,
+        question,
+        answers,
+        picks_a: myPicks,
+        max_picks: maxPicks
+      })
+    });
+
+    // Lock inputs
+    document.getElementById('answers-list').querySelectorAll('input').forEach(i => i.disabled = true);
+    document.getElementById('answers-list').querySelectorAll('.ai-btn,.del-btn,.glass-check')
+      .forEach(b => b.style.pointerEvents = 'none');
+    document.querySelector('.add-row').style.display   = 'none';
+    document.querySelector('.info-box').style.display  = 'none';
+    btn.style.display = 'none';
+
+    const link = `${window.location.origin}${window.location.pathname}?q=${sessionId}`;
+    document.getElementById('link-display').textContent = link;
+    document.getElementById('phase-waiting').style.display = 'block';
+    startCountdown();
+
+  } catch (e) {
+    alert('Fehler beim Speichern: ' + e.message);
+    btn.innerHTML = '<i class="ti ti-link"></i> Link generieren';
+    btn.disabled = false;
+  }
 }
 
+// ── Countdown & auto-refresh ──
 function startCountdown() {
   countdownSec = 30;
   document.getElementById('countdown').textContent = '30s';
   if (countdownTimer) clearInterval(countdownTimer);
-  countdownTimer = setInterval(() => {
+  countdownTimer = setInterval(async () => {
     countdownSec--;
     document.getElementById('countdown').textContent = countdownSec + 's';
-    if (countdownSec <= 0) countdownSec = 30;
+    if (countdownSec <= 0) {
+      countdownSec = 30;
+      // Auto check if Person B has answered
+      await checkForResult();
+    }
   }, 1000);
 }
 
+async function checkForResult() {
+  if (!sessionId) return;
+  try {
+    const data = await sbFetch(`sessions?id=eq.${sessionId}&select=picks_b`);
+    if (data && data[0] && data[0].picks_b) {
+      clearInterval(countdownTimer);
+      showResult(data[0].picks_b);
+    }
+  } catch (e) { console.log('Check error:', e); }
+}
+
 function copyLink() {
-  const btn = document.querySelector('.copy-btn');
-  btn.innerHTML = '<i class="ti ti-check"></i> Kopiert!';
-  setTimeout(() => btn.innerHTML = '<i class="ti ti-copy"></i> Kopieren', 2000);
-}
-
-// ── Simulate Person B ──
-function simPersonB() {
-  const shuffled = [...answers].sort(() => Math.random() - 0.5);
-  document.getElementById('q-display-b').textContent = question;
-  document.getElementById('q-meta-b').textContent    = `Wähle bis zu ${maxPicks} Antwort${maxPicks > 1 ? 'en' : ''}`;
-  let bSel = [];
-  const bc = document.getElementById('b-choices');
-  bc.innerHTML = '';
-  shuffled.forEach(a => {
-    const origI = answers.indexOf(a);
-    const d = document.createElement('div');
-    d.className = 'answer-choice';
-    d.innerHTML = `<i class="ti ti-circle" style="font-size:18px;color:#F97316"></i> ${a}`;
-    d.onclick = () => {
-      if (d.classList.contains('selected')) {
-        d.classList.remove('selected');
-        d.querySelector('i').className = 'ti ti-circle';
-        bSel = bSel.filter(x => x !== origI);
-      } else if (bSel.length < maxPicks) {
-        d.classList.add('selected');
-        d.querySelector('i').className = 'ti ti-circle-check';
-        bSel.push(origI);
-      }
-      document.getElementById('b-send-btn')._bSel = bSel;
-    };
-    bc.appendChild(d);
+  const link = document.getElementById('link-display').textContent;
+  navigator.clipboard.writeText(link).then(() => {
+    const btn = document.querySelector('.copy-btn');
+    btn.innerHTML = '<i class="ti ti-check"></i> Kopiert!';
+    setTimeout(() => btn.innerHTML = '<i class="ti ti-copy"></i> Kopieren', 2000);
   });
-  document.getElementById('b-send-btn')._bSel = bSel;
-  document.getElementById('phase-personb').style.display = 'block';
-  document.getElementById('phase-personb').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-// ── Submit Person B ──
-function submitB() {
+// ── Person B: load session from URL ──
+async function loadPersonB(qId) {
+  // Hide create phase, show loading
+  document.getElementById('phase-create').style.display = 'none';
+
+  try {
+    const data = await sbFetch(`sessions?id=eq.${qId}&select=*`);
+    if (!data || !data[0]) {
+      document.body.innerHTML = '<div style="padding:2rem;font-family:sans-serif;">Link ungültig oder abgelaufen.</div>';
+      return;
+    }
+    const session = data[0];
+
+    // Already answered?
+    if (session.picks_b) {
+      showResultPage(session);
+      return;
+    }
+
+    sessionId  = qId;
+    answers    = session.answers;
+    myPicks    = session.picks_a;
+    maxPicks   = session.max_picks;
+    question   = session.question;
+
+    document.getElementById('q-display-b').textContent = question;
+    document.getElementById('q-meta-b').textContent    = `Wähle bis zu ${maxPicks} Antwort${maxPicks > 1 ? 'en' : ''}`;
+
+    const shuffled = [...answers].sort(() => Math.random() - 0.5);
+    let bSel = [];
+    const bc = document.getElementById('b-choices');
+    bc.innerHTML = '';
+    shuffled.forEach(a => {
+      const origI = answers.indexOf(a);
+      const d = document.createElement('div');
+      d.className = 'answer-choice';
+      d.innerHTML = `<i class="ti ti-circle" style="font-size:18px;color:#F97316"></i> ${a}`;
+      d.onclick = () => {
+        if (d.classList.contains('selected')) {
+          d.classList.remove('selected');
+          d.querySelector('i').className = 'ti ti-circle';
+          bSel = bSel.filter(x => x !== origI);
+        } else if (bSel.length < maxPicks) {
+          d.classList.add('selected');
+          d.querySelector('i').className = 'ti ti-circle-check';
+          bSel.push(origI);
+        }
+        document.getElementById('b-send-btn')._bSel = bSel;
+      };
+      bc.appendChild(d);
+    });
+    document.getElementById('b-send-btn')._bSel = bSel;
+    document.getElementById('phase-personb').style.display = 'block';
+
+  } catch (e) {
+    document.body.innerHTML = '<div style="padding:2rem;font-family:sans-serif;">Fehler beim Laden: ' + e.message + '</div>';
+  }
+}
+
+// ── Person B submits ──
+async function submitB() {
   const bSel = document.getElementById('b-send-btn')._bSel || [];
   if (!bSel.length) { alert('Bitte wähle mindestens eine Antwort!'); return; }
-  if (countdownTimer) clearInterval(countdownTimer);
 
+  const btn = document.getElementById('b-send-btn');
+  btn.innerHTML = '<span class="spinning">↻</span> Wird gespeichert...';
+  btn.disabled = true;
+
+  try {
+    await sbFetch(`sessions?id=eq.${sessionId}`, {
+      method: 'PATCH',
+      prefer: 'return=minimal',
+      body: JSON.stringify({ picks_b: bSel })
+    });
+    showResult(bSel);
+  } catch (e) {
+    alert('Fehler: ' + e.message);
+    btn.innerHTML = 'Senden';
+    btn.disabled = false;
+  }
+}
+
+// ── Show result ──
+function showResult(bSel) {
   const matches = myPicks.filter(i => bSel.includes(i));
   document.getElementById('q-display-result').textContent = question;
 
@@ -209,8 +335,8 @@ function submitB() {
   if (matches.length === 0) {
     document.getElementById('match-title').textContent = 'Kein gemeinsames Match';
     document.getElementById('match-sub').textContent   = 'Ihr habt diesmal nichts Gemeinsames gewählt';
-    mb.style.background   = '#F9FAFB';
-    mb.style.borderColor  = '#E5E7EB';
+    mb.style.background  = '#F9FAFB';
+    mb.style.borderColor = '#E5E7EB';
     document.getElementById('match-title').style.color = '#111827';
   } else {
     const perfect = matches.length === Math.max(myPicks.length, bSel.length);
@@ -233,22 +359,37 @@ function submitB() {
     rc.appendChild(d);
   });
 
-  document.getElementById('phase-result').style.display = 'block';
+  document.getElementById('phase-personb').style.display = 'none';
+  document.getElementById('phase-waiting').style.display = 'none';
+  document.getElementById('phase-result').style.display  = 'block';
   document.getElementById('phase-result').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ── Show result page for already-answered sessions ──
+function showResultPage(session) {
+  answers  = session.answers;
+  myPicks  = session.picks_a;
+  question = session.question;
+  document.getElementById('phase-create').style.display = 'none';
+  showResult(session.picks_b);
 }
 
 // ── Reset ──
 function resetAll() {
-  myPicks = []; answers = []; question = ''; maxPicks = 1;
+  myPicks = []; answers = []; question = ''; maxPicks = 1; sessionId = null;
   if (countdownTimer) clearInterval(countdownTimer);
-  document.getElementById('count-num').textContent   = '1';
-  document.getElementById('q-input').value           = '';
+  document.getElementById('count-num').textContent = '1';
+  document.getElementById('q-input').value = '';
   init();
   document.querySelector('.add-row').style.display   = '';
   document.querySelector('.info-box').style.display  = '';
   document.getElementById('gen-link-btn').style.display  = '';
+  document.getElementById('gen-link-btn').innerHTML  = '<i class="ti ti-link"></i> Link generieren';
+  document.getElementById('gen-link-btn').disabled   = false;
+  document.getElementById('phase-create').style.display  = 'block';
   document.getElementById('phase-waiting').style.display = 'none';
   document.getElementById('phase-personb').style.display = 'none';
   document.getElementById('phase-result').style.display  = 'none';
+  window.history.pushState({}, '', window.location.pathname);
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
