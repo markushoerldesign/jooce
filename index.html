@@ -7,12 +7,13 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="/style.css" />
 </head>
 <body>
-  <div class="wrap" id="app">
+<div class="wrap" id="app">
 
-    <!-- LOGO -->
+  <!-- PERSON A: ERSTELLEN -->
+  <div id="phase-create">
     <div class="logo">
       <svg width="30" height="30" viewBox="0 0 32 32" fill="none">
         <rect x="8" y="10" width="16" height="18" rx="3" fill="#FFF3E8" stroke="#F97316" stroke-width="1.5"/>
@@ -23,104 +24,68 @@
       <span class="logo-text">jooce<em>.</em></span>
     </div>
 
-    <!-- PHASE 1: ERSTELLEN -->
-    <div id="phase-create">
-      <div class="section">
-        <span class="label">Deine Frage</span>
-        <div class="q-row">
-          <textarea id="q-input" rows="3" placeholder="z.B. Was möchtest du heute machen?"></textarea>
-          <div class="max-badge">
-            <span class="badge-label">Antworten<br>erlaubt</span>
-            <div class="badge-controls">
-              <button class="cnt-btn" onclick="chgCount(-1)">−</button>
-              <span class="cnt-num" id="count-num">1</span>
-              <button class="cnt-btn" onclick="chgCount(1)">+</button>
-            </div>
+    <div class="section">
+      <div class="q-row">
+        <textarea id="q-input" rows="3" placeholder="Tippe deine Frage, z.B. Was möchtest du heute machen?"></textarea>
+        <div class="max-badge">
+          <span class="badge-label">Mögliche<br>Antworten</span>
+          <div class="badge-controls">
+            <button class="cnt-btn" onclick="chgCount(-1)">−</button>
+            <span class="cnt-num" id="count-num">1</span>
+            <button class="cnt-btn" onclick="chgCount(1)">+</button>
           </div>
         </div>
       </div>
-
-      <div id="answers-list"></div>
-
-      <div class="add-row">
-        <div class="add-spacer"></div>
-        <div class="add-field" onclick="addRow()">
-          <i class="ti ti-plus"></i> Antwort hinzufügen
-        </div>
-      </div>
-
-      <div class="info-box">
-        <div class="info-row">
-          <i class="ti ti-sparkles"></i>
-          <span>KI generiert Antworten passend zu deiner Frage und deinen bisherigen Einträgen.</span>
-        </div>
-        <div class="info-row">
-          <svg width="16" height="18" viewBox="0 0 16 20" fill="none">
-            <rect x="2" y="4" width="12" height="14" rx="2" fill="#FFF3E8" stroke="#F97316" stroke-width="1.2"/>
-            <path d="M4 4 L3.2 1.5 L12.8 1.5 L12 4" stroke="#F97316" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-            <rect x="2" y="12" width="12" height="6" rx="0" fill="#F97316" opacity="0.5"/>
-            <path d="M5 7 Q8 10 11 7" stroke="#F97316" stroke-width="1" stroke-linecap="round" fill="none"/>
-          </svg>
-          <span>Wähle deine Antwort. Die andere Person sieht sie nur, wenn sie die gleiche Antwort gibt.</span>
-        </div>
-      </div>
-
-      <button class="primary-btn" id="gen-link-btn" onclick="generateLink()">
-        <i class="ti ti-link"></i> Link generieren
-      </button>
     </div>
 
-    <!-- PHASE 2: WARTEN -->
-    <div id="phase-waiting" style="display:none;">
-      <hr class="divider" />
-      <p class="phase-label">Dein Link</p>
-      <p class="hint">Deine Antworten sind gespeichert. Teile diesen Link – die andere Person sieht nicht, was du gewählt hast.</p>
-      <div class="link-box">
-        <span class="link-text" id="link-display">jooce.app/q/...</span>
-        <button class="copy-btn" onclick="copyLink()"><i class="ti ti-copy"></i> Kopieren</button>
+    <div id="answers-list"></div>
+
+    <div class="add-row">
+      <div class="add-spacer"></div>
+      <div class="add-field" onclick="addRow()">
+        <i class="ti ti-plus"></i> Antwort hinzufügen
       </div>
-      <div class="notif-banner">
-        <i class="ti ti-bell" style="color:#16A34A;font-size:16px;margin-top:1px;"></i>
-        <div>
-          <div class="notif-text">Du bekommst eine Benachrichtigung, sobald die andere Person geantwortet hat.</div>
-          <div class="timer-badge"><i class="ti ti-refresh" style="font-size:13px"></i> Aktualisiert in <span id="countdown">30s</span></div>
-        </div>
-      </div>
-      <button class="secondary-btn" onclick="simPersonB()">
-        <i class="ti ti-user"></i> Vorschau: Person B öffnet den Link
-      </button>
     </div>
 
-    <!-- PHASE 3: PERSON B -->
-    <div id="phase-personb" style="display:none;">
-      <hr class="divider" />
-      <p class="phase-label">Ansicht von Person B</p>
-      <p class="hint">Jemand hat dir eine Frage gestellt</p>
-      <p class="question-display" id="q-display-b"></p>
-      <p class="question-meta" id="q-meta-b"></p>
-      <div id="b-choices"></div>
-      <button class="primary-btn" id="b-send-btn" onclick="submitB()">Senden</button>
+    <div class="info-box">
+      <div class="info-row">
+        <i class="ti ti-sparkles"></i>
+        <span>Generiere deine Antwort mit KI.</span>
+      </div>
+      <div class="info-row">
+        <svg width="16" height="18" viewBox="0 0 32 32" fill="none">
+          <rect x="8" y="10" width="16" height="18" rx="3" fill="#FFF3E8" stroke="#F97316" stroke-width="1.5"/>
+          <path d="M11 10 L10 6 L22 6 L21 10" stroke="#F97316" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+          <rect x="8" y="20" width="16" height="8" fill="#FDBA74" opacity="0.85"/>
+          <path d="M12 14 Q16 19 20 14" stroke="#F97316" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+        </svg>
+        <span>Wähle deine Antwort. Die andere Person sieht sie nur, wenn sie die gleiche gibt.</span>
+      </div>
     </div>
 
-    <!-- PHASE 4: ERGEBNIS -->
-    <div id="phase-result" style="display:none;">
-      <hr class="divider" />
-      <p class="phase-label">Ergebnis</p>
-      <div class="match-banner" id="match-banner">
-        <div class="match-title" id="match-title"></div>
-        <div class="match-sub" id="match-sub"></div>
-      </div>
-      <p class="question-display" id="q-display-result" style="font-size:16px;margin-bottom:.75rem;"></p>
-      <div id="result-choices"></div>
-      <div class="secret-note">
-        <i class="ti ti-lock" style="font-size:13px;flex-shrink:0;margin-top:1px;color:#F97316"></i>
-        Was jeder für sich alleine gewählt hat, bleibt geheim – nur eure gemeinsamen Antworten werden angezeigt.
-      </div>
-      <button class="secondary-btn" style="margin-top:1rem;" onclick="resetAll()">Neue Frage erstellen</button>
-    </div>
-
+    <button class="primary-btn" id="gen-link-btn" onclick="generateLink()">
+      <i class="ti ti-link"></i> Link generieren
+    </button>
   </div>
 
-  <script src="app.js"></script>
+  <!-- PERSON B: ANTWORTEN -->
+  <div id="phase-personb" style="display:none;">
+    <div class="logo">
+      <svg width="30" height="30" viewBox="0 0 32 32" fill="none">
+        <rect x="8" y="10" width="16" height="18" rx="3" fill="#FFF3E8" stroke="#F97316" stroke-width="1.5"/>
+        <path d="M11 10 L10 6 L22 6 L21 10" stroke="#F97316" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        <path d="M12 14 Q16 19 20 14" stroke="#F97316" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+        <circle cx="16" cy="21" r="2" fill="#F97316" opacity="0.4"/>
+      </svg>
+      <span class="logo-text">jooce<em>.</em></span>
+    </div>
+    <p class="question-display" id="q-display-b"></p>
+    <p class="question-meta" id="q-meta-b"></p>
+    <div id="b-choices"></div>
+    <button class="primary-btn" id="b-send-btn" onclick="submitB()" style="margin-top:1rem;">Senden</button>
+  </div>
+
+</div>
+<script src="/app.js"></script>
 </body>
 </html>
