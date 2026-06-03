@@ -1,0 +1,7 @@
+{
+  "rewrites": [
+    { "source": "/warten/:id", "destination": "/index.html" },
+    { "source": "/antworten/:id", "destination": "/index.html" },
+    { "source": "/ergebnis/:id", "destination": "/index.html" }
+  ]
+}
