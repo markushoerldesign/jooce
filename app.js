@@ -4,7 +4,7 @@ const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 
 // ── State ──
 let maxPicks = 1, myPicks = [], answers = [], question = '';
-let countdownTimer = null, countdownSec = 30;
+let pollTimer = null;
 let sessionId = null;
 
 // ── Supabase Helper ──
@@ -27,36 +27,43 @@ function makeId() {
   return Math.random().toString(36).slice(2, 8);
 }
 
-// ── Glass SVG icon ──
+// ── Glass SVG (Logo shape) ──
 function glassIcon(filled) {
   const id = 'gc' + Math.random().toString(36).slice(2);
-  return `<svg width="22" height="26" viewBox="0 0 22 26" fill="none">
-    <defs><clipPath id="${id}"><rect x="2" y="4" width="18" height="19" rx="2"/></clipPath></defs>
-    <rect x="2" y="4" width="18" height="19" rx="2"
-      fill="${filled ? '#FFF3E8' : '#fff'}" stroke="#F97316" stroke-width="1.3"/>
-    <path d="M4.5 4 L3.5 1 L18.5 1 L17.5 4"
-      stroke="#F97316" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  return `<svg width="24" height="26" viewBox="0 0 32 32" fill="none">
+    <defs><clipPath id="${id}"><rect x="8" y="10" width="16" height="18" rx="3"/></clipPath></defs>
+    <rect x="8" y="10" width="16" height="18" rx="3"
+      fill="${filled ? '#FFF3E8' : 'var(--bg)'}" stroke="#F97316" stroke-width="1.5"/>
+    <path d="M11 10 L10 6 L22 6 L21 10"
+      stroke="#F97316" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
     ${filled
-      ? `<rect x="2" y="13" width="18" height="10" fill="#FDBA74" opacity="0.85" clip-path="url(#${id})"/>
-         <path d="M4 13 Q11 10 18 13" stroke="#F97316" stroke-width="0.8" stroke-linecap="round" fill="none" opacity="0.6"/>
-         <circle cx="8" cy="17" r="1.2" fill="#F97316" opacity="0.35"/>
-         <circle cx="13" cy="19" r="0.9" fill="#F97316" opacity="0.3"/>`
-      : `<path d="M6 13 Q11 17 16 13" stroke="#F97316" stroke-width="1" stroke-linecap="round" fill="none" opacity="0.4"/>`
+      ? `<rect x="8" y="20" width="16" height="8" fill="#FDBA74" opacity="0.9" clip-path="url(#${id})"/>
+         <path d="M10 20 Q16 17 22 20" stroke="#F97316" stroke-width="0.8" stroke-linecap="round" fill="none" opacity="0.6"/>
+         <circle cx="13" cy="23" r="1.2" fill="#F97316" opacity="0.35"/>
+         <circle cx="18" cy="25" r="0.9" fill="#F97316" opacity="0.3"/>`
+      : `<path d="M12 14 Q16 19 20 14" stroke="#F97316" stroke-width="1.5" stroke-linecap="round" fill="none" opacity="0.4"/>
+         <circle cx="16" cy="21" r="2" fill="#F97316" opacity="0.15"/>`
     }
   </svg>`;
 }
 
-// ── Big glass for result screen ──
-function bigGlassIcon() {
-  return `<svg width="64" height="74" viewBox="0 0 64 74" fill="none">
-    <defs><clipPath id="bgc"><rect x="6" y="12" width="52" height="54" rx="6"/></clipPath></defs>
-    <rect x="6" y="12" width="52" height="54" rx="6" fill="#FFF3E8" stroke="#F97316" stroke-width="2"/>
-    <path d="M14 12 L11 3 L53 3 L50 12" stroke="#F97316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-    <rect x="6" y="40" width="52" height="26" fill="#FDBA74" opacity="0.85" clip-path="url(#bgc)"/>
-    <path d="M10 40 Q32 33 54 40" stroke="#F97316" stroke-width="1.5" stroke-linecap="round" fill="none" opacity="0.7"/>
-    <circle cx="22" cy="52" r="3.5" fill="#F97316" opacity="0.35"/>
-    <circle cx="38" cy="57" r="2.5" fill="#F97316" opacity="0.3"/>
-    <circle cx="46" cy="49" r="2" fill="#F97316" opacity="0.25"/>
+// ── Big glass for result & waiting ──
+function bigGlass(pct) {
+  const fillY = 28 - (18 * pct);
+  const fillH = 18 * pct;
+  return `<svg width="72" height="80" viewBox="0 0 32 32" fill="none">
+    <defs><clipPath id="bg"><rect x="8" y="10" width="16" height="18" rx="3"/></clipPath></defs>
+    <rect x="8" y="10" width="16" height="18" rx="3" fill="#FFF3E8" stroke="#F97316" stroke-width="1.5"/>
+    <path d="M11 10 L10 6 L22 6 L21 10" stroke="#F97316" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    ${pct > 0 ? `
+      <rect x="8" y="${fillY}" width="16" height="${fillH + 2}" fill="#FDBA74" opacity="0.85" clip-path="url(#bg)"/>
+      <path d="M10 ${fillY} Q16 ${fillY - 2} 22 ${fillY}" stroke="#F97316" stroke-width="0.8" stroke-linecap="round" fill="none" opacity="0.6"/>
+      <circle cx="13" cy="${fillY + 4}" r="1.2" fill="#F97316" opacity="0.35"/>
+      <circle cx="18" cy="${fillY + 7}" r="0.9" fill="#F97316" opacity="0.3"/>
+    ` : `
+      <path d="M12 14 Q16 19 20 14" stroke="#F97316" stroke-width="1.5" stroke-linecap="round" fill="none" opacity="0.4"/>
+      <circle cx="16" cy="21" r="2" fill="#F97316" opacity="0.15"/>
+    `}
   </svg>`;
 }
 
@@ -85,7 +92,6 @@ function makeChoiceRow(text, origI, bSelArr, maxP) {
   const d = document.createElement('div');
   d.className = 'answer-row';
   d.innerHTML = `
-    <div class="add-spacer"></div>
     <div class="glass-check b-glass" data-filled="0" data-idx="${origI}" title="Antwort wählen">
       ${glassIcon(false)}
     </div>
@@ -115,15 +121,17 @@ function makeChoiceRow(text, origI, bSelArr, maxP) {
 
 function init() {
   const list = document.getElementById('answers-list');
-  list.innerHTML = '';
-  for (let i = 1; i <= 4; i++) list.appendChild(makeRow(i));
+  if (list) {
+    list.innerHTML = '';
+    for (let i = 1; i <= 4; i++) list.appendChild(makeRow(i));
+  }
   const params = new URLSearchParams(window.location.search);
   const qId = params.get('q');
   if (qId) loadPersonB(qId);
 }
 init();
 
-// ── KI: call Supabase Edge Function ──
+// ── KI: Supabase Edge Function ──
 async function genOne(btn) {
   const row = btn.parentElement;
   const input = row.querySelector('input');
@@ -135,7 +143,7 @@ async function genOne(btn) {
     .map(i => i.value.trim()).filter(Boolean);
 
   try {
-    const res = await fetch(`${SUPABASE_URL}/functions/v1/generate`, {
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/hyper-worker`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -146,7 +154,6 @@ async function genOne(btn) {
     const data = await res.json();
     input.value = data.answer || '';
   } catch(e) {
-    // Fallback to local pool
     const pool = detectPoolLocal(q, existing);
     const avail = pool.filter(p => !existing.includes(p));
     input.value = (avail.length ? avail : pool)[Math.floor(Math.random() * (avail.length || pool.length))];
@@ -173,7 +180,7 @@ function detectPoolLocal(q, existing) {
   return pools.def;
 }
 
-// ── Toggle glass check (Person A) ──
+// ── Toggle glass (Person A) ──
 function toggleCheck(el) {
   const rows = Array.from(document.getElementById('answers-list').querySelectorAll('.answer-row'));
   const idx  = rows.indexOf(el.closest('.answer-row'));
@@ -209,7 +216,7 @@ function delRow(btn) {
     btn.closest('.answer-row').remove();
 }
 
-// ── Generate link & save ──
+// ── Generate link ──
 async function generateLink() {
   question = document.getElementById('q-input').value.trim() || 'Was möchtest du heute machen?';
   const rows = Array.from(document.getElementById('answers-list').querySelectorAll('.answer-row'));
@@ -229,17 +236,8 @@ async function generateLink() {
       body: JSON.stringify({ id: sessionId, question, answers, picks_a: myPicks, max_picks: maxPicks })
     });
 
-    document.getElementById('answers-list').querySelectorAll('input').forEach(i => i.disabled = true);
-    document.getElementById('answers-list').querySelectorAll('.ai-btn,.del-btn,.glass-check')
-      .forEach(b => b.style.pointerEvents = 'none');
-    document.querySelector('.add-row').style.display  = 'none';
-    document.querySelector('.info-box').style.display = 'none';
-    btn.style.display = 'none';
-
     const link = `${window.location.origin}${window.location.pathname}?q=${sessionId}`;
-    document.getElementById('link-display').textContent = link;
-    document.getElementById('phase-waiting').style.display = 'block';
-    startCountdown();
+    showWaiting(link);
   } catch (e) {
     alert('Fehler beim Speichern: ' + e.message);
     btn.innerHTML = '<i class="ti ti-link"></i> Link generieren';
@@ -247,37 +245,89 @@ async function generateLink() {
   }
 }
 
-// ── Countdown & polling ──
-function startCountdown() {
-  countdownSec = 30;
-  document.getElementById('countdown').textContent = '30s';
-  if (countdownTimer) clearInterval(countdownTimer);
-  countdownTimer = setInterval(async () => {
-    countdownSec--;
-    document.getElementById('countdown').textContent = countdownSec + 's';
-    if (countdownSec <= 0) { countdownSec = 30; await checkForResult(); }
+// ── Show waiting screen (Person A) ──
+function showWaiting(link) {
+  document.getElementById('phase-create').style.display = 'none';
+
+  const app = document.getElementById('app');
+  const waiting = document.createElement('div');
+  waiting.id = 'phase-waiting-screen';
+  waiting.innerHTML = `
+    <div class="logo">
+      <svg width="30" height="30" viewBox="0 0 32 32" fill="none">
+        <rect x="8" y="10" width="16" height="18" rx="3" fill="#FFF3E8" stroke="#F97316" stroke-width="1.5"/>
+        <path d="M11 10 L10 6 L22 6 L21 10" stroke="#F97316" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        <path d="M12 14 Q16 19 20 14" stroke="#F97316" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+        <circle cx="16" cy="21" r="2" fill="#F97316" opacity="0.4"/>
+      </svg>
+      <span class="logo-text">jooce<em>.</em></span>
+    </div>
+    <div class="waiting-center">
+      <div class="waiting-glass" id="waiting-glass">${bigGlass(0)}</div>
+      <div class="waiting-title">Warte auf die Antwort<br>der anderen Person</div>
+      <div class="waiting-sub" id="waiting-sub">Wird in <span id="poll-countdown">15</span>s neu geprüft</div>
+      <div class="link-box" style="margin-top:1.5rem;">
+        <span class="link-text">${link}</span>
+        <button class="copy-btn" onclick="copyLink('${link}')"><i class="ti ti-copy"></i> Kopieren</button>
+      </div>
+      <button class="share-btn" onclick="shareLink('${link}')">
+        <i class="ti ti-share"></i> Link teilen
+      </button>
+      <button class="secondary-btn" style="margin-top:0.5rem;" onclick="resetAll()">Neue Frage erstellen</button>
+    </div>`;
+  app.appendChild(waiting);
+
+  startPolling();
+}
+
+// ── Polling every 15s ──
+function startPolling() {
+  let sec = 15;
+  const el = document.getElementById('poll-countdown');
+  if (pollTimer) clearInterval(pollTimer);
+  pollTimer = setInterval(async () => {
+    sec--;
+    if (el) el.textContent = sec;
+    if (sec <= 0) {
+      sec = 15;
+      await checkForResult();
+    }
   }, 1000);
+  checkForResult();
 }
 
 async function checkForResult() {
   if (!sessionId) return;
   const data = await sbFetch(`sessions?id=eq.${sessionId}&select=picks_b,answers,question`);
   if (data && data[0] && data[0].picks_b) {
-    clearInterval(countdownTimer);
+    clearInterval(pollTimer);
     answers  = data[0].answers;
     question = data[0].question;
-    document.getElementById('phase-waiting').style.display = 'none';
+    const waiting = document.getElementById('phase-waiting-screen');
+    if (waiting) waiting.remove();
     showResult(data[0].picks_b);
   }
 }
 
-function copyLink() {
-  const link = document.getElementById('link-display').textContent;
+function copyLink(link) {
   navigator.clipboard.writeText(link).then(() => {
     const btn = document.querySelector('.copy-btn');
     btn.innerHTML = '<i class="ti ti-check"></i> Kopiert!';
     setTimeout(() => btn.innerHTML = '<i class="ti ti-copy"></i> Kopieren', 2000);
   });
+}
+
+function shareLink(link) {
+  if (navigator.share) {
+    navigator.share({
+      title: 'jooce – Beantworte meine Frage!',
+      text: 'Ich habe eine Frage für dich auf jooce!',
+      url: link
+    });
+  } else {
+    // Fallback: WhatsApp
+    window.open(`https://wa.me/?text=${encodeURIComponent('Ich habe eine Frage für dich auf jooce! ' + link)}`, '_blank');
+  }
 }
 
 // ── Person B: load from URL ──
@@ -286,7 +336,17 @@ async function loadPersonB(qId) {
   try {
     const data = await sbFetch(`sessions?id=eq.${qId}&select=*`);
     if (!data || !data[0]) {
-      document.body.innerHTML = '<div style="padding:2rem;font-family:sans-serif;text-align:center;"><br><br>❌ Link ungültig oder abgelaufen.</div>';
+      document.getElementById('app').innerHTML = `
+        <div class="logo">
+          <svg width="30" height="30" viewBox="0 0 32 32" fill="none">
+            <rect x="8" y="10" width="16" height="18" rx="3" fill="#FFF3E8" stroke="#F97316" stroke-width="1.5"/>
+            <path d="M11 10 L10 6 L22 6 L21 10" stroke="#F97316" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            <path d="M12 14 Q16 19 20 14" stroke="#F97316" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+            <circle cx="16" cy="21" r="2" fill="#F97316" opacity="0.4"/>
+          </svg>
+          <span class="logo-text">jooce<em>.</em></span>
+        </div>
+        <div style="text-align:center;padding:2rem 0;color:var(--text-secondary);">❌ Link ungültig oder abgelaufen.</div>`;
       return;
     }
     const session = data[0];
@@ -312,7 +372,7 @@ async function loadPersonB(qId) {
     document.getElementById('b-send-btn')._bSel = bSel;
     document.getElementById('phase-personb').style.display = 'block';
   } catch (e) {
-    document.body.innerHTML = '<div style="padding:2rem;font-family:sans-serif;">Fehler: ' + e.message + '</div>';
+    console.error(e);
   }
 }
 
@@ -340,11 +400,10 @@ async function submitB() {
   }
 }
 
-// ── Show result (both A and B) ──
+// ── Show result ──
 function showResult(bSel) {
   const matches = myPicks.filter(i => bSel.includes(i));
   const matchCount = matches.length;
-  const resultEl = document.getElementById('phase-result');
 
   let matchesHtml = '';
   matches.forEach(i => {
@@ -355,15 +414,24 @@ function showResult(bSel) {
       </div>`;
   });
 
-  resultEl.innerHTML = `
+  const app = document.getElementById('app');
+  app.innerHTML = `
     <div class="result-center">
-      <div class="result-big-glass">${bigGlassIcon()}</div>
+      <div class="logo" style="justify-content:center;margin-bottom:1.5rem;">
+        <svg width="30" height="30" viewBox="0 0 32 32" fill="none">
+          <rect x="8" y="10" width="16" height="18" rx="3" fill="#FFF3E8" stroke="#F97316" stroke-width="1.5"/>
+          <path d="M11 10 L10 6 L22 6 L21 10" stroke="#F97316" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+          <path d="M12 14 Q16 19 20 14" stroke="#F97316" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+          <circle cx="16" cy="21" r="2" fill="#F97316" opacity="0.4"/>
+        </svg>
+        <span class="logo-text">jooce<em>.</em></span>
+      </div>
+      <div class="result-big-glass">${bigGlass(matchCount > 0 ? 0.7 : 0)}</div>
       <div class="result-title">
         ${matchCount === 0
           ? 'Kein gemeinsames Match'
-          : matchCount === 1
-            ? '1 gemeinsame Antwort'
-            : `${matchCount} gemeinsame Antworten`}
+          : matchCount === 1 ? '1 gemeinsame Antwort'
+          : `${matchCount} gemeinsame Antworten`}
       </div>
       <div class="result-sub">
         ${matchCount === 0
@@ -373,15 +441,12 @@ function showResult(bSel) {
             : 'Das habt ihr beide gewählt:'}
       </div>
       ${matchesHtml}
-      <div class="secret-note" style="margin-top:1.5rem;">
+      <div class="secret-note" style="margin-top:1.5rem;width:100%;">
         <i class="ti ti-lock" style="font-size:13px;flex-shrink:0;margin-top:1px;color:#F97316"></i>
         Was jeder für sich alleine gewählt hat, bleibt geheim.
       </div>
-      <button class="secondary-btn" style="margin-top:1rem;" onclick="resetAll()">Neue Frage erstellen</button>
+      <button class="secondary-btn" style="margin-top:1rem;width:100%;" onclick="location.href=location.pathname">Neue Frage erstellen</button>
     </div>`;
-
-  resultEl.style.display = 'block';
-  resultEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 function showResultPage(session) {
@@ -394,19 +459,6 @@ function showResultPage(session) {
 
 // ── Reset ──
 function resetAll() {
-  myPicks = []; answers = []; question = ''; maxPicks = 1; sessionId = null;
-  if (countdownTimer) clearInterval(countdownTimer);
-  document.getElementById('count-num').textContent = '1';
-  document.getElementById('q-input').value = '';
-  init();
-  document.querySelector('.add-row').style.display  = '';
-  document.querySelector('.info-box').style.display = '';
-  const gb = document.getElementById('gen-link-btn');
-  gb.style.display = ''; gb.innerHTML = '<i class="ti ti-link"></i> Link generieren'; gb.disabled = false;
-  document.getElementById('phase-create').style.display  = 'block';
-  document.getElementById('phase-waiting').style.display = 'none';
-  document.getElementById('phase-personb').style.display = 'none';
-  document.getElementById('phase-result').style.display  = 'none';
-  window.history.pushState({}, '', window.location.pathname);
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  if (pollTimer) clearInterval(pollTimer);
+  location.href = location.pathname;
 }
