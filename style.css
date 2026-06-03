@@ -240,3 +240,47 @@ textarea:focus { outline: none; border-color: var(--orange); }
 .result-match-text {
   font-size: 15px; font-weight: 500; color: var(--green-dark);
 }
+
+/* ── Waiting Screen ── */
+.waiting-center {
+  display: flex; flex-direction: column; align-items: center;
+  text-align: center; padding: 1rem 0;
+}
+.waiting-glass { margin-bottom: 1.25rem; }
+.waiting-title {
+  font-size: 18px; font-weight: 500; color: var(--text-primary);
+  line-height: 1.4; margin-bottom: 0.5rem;
+}
+.waiting-sub { font-size: 13px; color: var(--text-secondary); margin-bottom: 0.5rem; }
+
+/* ── Share Button ── */
+.share-btn {
+  background: #25D366; color: #fff; border: none;
+  border-radius: var(--radius); padding: 11px 20px;
+  font-size: 15px; font-weight: 500; cursor: pointer;
+  width: 100%; margin-top: 0.75rem; font-family: var(--font);
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.share-btn:hover { background: #1ebe5d; }
+
+/* ── Result Screen ── */
+.result-center {
+  display: flex; flex-direction: column; align-items: center;
+  text-align: center; padding: 1rem 0; width: 100%;
+}
+.result-big-glass { margin-bottom: 1.25rem; }
+.result-title {
+  font-size: 22px; font-weight: 600; color: var(--text-primary);
+  margin-bottom: 0.4rem; line-height: 1.3;
+}
+.result-sub { font-size: 14px; color: var(--text-secondary); margin-bottom: 1.25rem; }
+.result-match-row {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--green-light); border: 1px solid var(--green-border);
+  border-radius: var(--radius); padding: 10px 16px;
+  margin-bottom: 8px; width: 100%; text-align: left;
+}
+.result-match-text { font-size: 15px; font-weight: 500; color: var(--green-dark); }
+
+/* ── Person B: flush left ── */
+#phase-personb .answer-row { padding-left: 0; }
