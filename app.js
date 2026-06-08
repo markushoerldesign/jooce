@@ -52,8 +52,7 @@ function bigGlass(pct) {
   const fillY = 28 - fillH;
   return `<svg width="80" height="90" viewBox="0 0 32 32" fill="none">
     <defs><clipPath id="${id}"><rect x="8" y="10" width="16" height="18" rx="3"/></clipPath></defs>
-    <rect x="8" y="10" width="16" height="18" rx="3" fill="#FFF7ED" stroke="#F97316" stroke-width="1.5"/>
-    <path d="M11 10 L10 6 L22 6 L21 10" stroke="#F97316" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    <rect x="8" y="10" width="16" height="18" rx="3" fill="#FFF7ED" stroke="none"/>
     ${pct > 0 ? `
       <rect x="8" y="${fillY}" width="16" height="${fillH + 1}" fill="#FDBA74" opacity="0.9" clip-path="url(#${id})"/>
       <path d="M10 ${fillY} Q16 ${fillY - 2} 22 ${fillY}" stroke="#F97316" stroke-width="0.8" stroke-linecap="round" fill="none" opacity="0.6"/>
@@ -63,6 +62,8 @@ function bigGlass(pct) {
       <path d="M12 14 Q16 19 20 14" stroke="#F97316" stroke-width="1.5" stroke-linecap="round" fill="none" opacity="0.4"/>
       <circle cx="16" cy="21" r="2" fill="#F97316" opacity="0.15"/>
     `}
+    <rect x="8" y="10" width="16" height="18" rx="3" fill="none" stroke="#F97316" stroke-width="1.5"/>
+    <path d="M11 10 L10 6 L22 6 L21 10" stroke="#F97316" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
   </svg>`;
 }
 
@@ -76,6 +77,7 @@ function makeRow(n) {
         ${checkCircle(false)}
       </div>
       <input type="text" placeholder="Antwort ${n}" />
+      <button class="del-btn" onclick="delRow(this)" aria-label="Entfernen"><i class="ti ti-x"></i></button>
       <button class="ki-btn" onclick="genOne(this)" title="KI generiert diese Antwort">KI</button>
     </div>`;
   return row;
