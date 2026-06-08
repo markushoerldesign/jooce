@@ -52,13 +52,27 @@ textarea:focus { outline: none; border-color: var(--orange); }
 .cnt-btn:hover { background: var(--orange-light); }
 .cnt-num { font-size: 16px; font-weight: 700; color: var(--orange); min-width: 16px; text-align: center; }
 
-/* Answer rows – check left, input middle, KI right */
-.answer-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+/* Answer rows */
+.answer-row { display: flex; align-items: center; gap: 0; margin-bottom: 10px; }
 
-.check-wrap {
-  flex-shrink: 0; width: 36px; height: 44px;
-  display: flex; align-items: center; justify-content: center; cursor: pointer;
+/* The whole answer field including check and KI inside the border */
+.answer-field {
+  flex: 1; display: flex; align-items: center;
+  border: 1.5px solid var(--border); border-radius: var(--radius);
+  background: var(--bg); height: 44px; overflow: hidden;
+  transition: border-color 0.2s;
 }
+.answer-field:focus-within { border-color: var(--orange); }
+
+/* Check section inside field */
+.check-wrap {
+  flex-shrink: 0; width: 46px; height: 44px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; border-right: 1.5px solid var(--border);
+  transition: background 0.15s;
+}
+.check-wrap:hover { background: #F9FAFB; }
+
 .check-circle {
   width: 26px; height: 26px; border-radius: 50%;
   border: 2px solid #D1D5DB;
@@ -68,41 +82,27 @@ textarea:focus { outline: none; border-color: var(--orange); }
 }
 .check-circle.checked { background: var(--green); border-color: var(--green); color: #fff; }
 
-.answer-field {
-  flex: 1; position: relative;
-  border: 1.5px solid var(--border); border-radius: var(--radius);
-  background: var(--bg); height: 44px;
-  display: flex; align-items: center;
-}
-.answer-field:focus-within { border-color: var(--orange); }
+/* Text input inside field */
 .answer-field input {
-  flex: 1; height: 100%; padding: 0 12px;
+  flex: 1; height: 100%; padding: 0 10px;
   border: none; outline: none;
   font-family: var(--font); font-size: 14px; color: var(--text-primary);
   background: transparent;
 }
 .answer-field input:disabled { color: var(--text-secondary); cursor: default; }
 
-.del-btn {
-  position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
-  width: 22px; height: 22px; border-radius: 50%;
-  background: var(--bg-secondary); border: 1.5px solid var(--border);
-  cursor: pointer; display: none; align-items: center; justify-content: center;
-  color: var(--text-secondary); padding: 0; font-size: 12px;
-}
-.del-btn:hover { background: #FEE2E2; border-color: #FCA5A5; color: #EF4444; }
-.answer-field:hover .del-btn,
-.answer-field input:focus ~ .del-btn { display: flex; }
-
-.ai-btn {
+/* KI button inside field */
+.ki-btn {
   flex-shrink: 0; background: var(--orange-light);
-  border: 1.5px solid var(--orange-mid); border-radius: 10px;
+  border: none; border-left: 1.5px solid var(--orange-mid);
   cursor: pointer; color: var(--orange);
-  height: 44px; width: 44px;
-  display: flex; align-items: center; justify-content: center; font-size: 18px;
+  height: 44px; width: 48px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 700; font-family: var(--font);
+  transition: background 0.15s;
 }
-.ai-btn:hover { background: #FEE7D0; }
-.ai-btn.loading { opacity: 0.5; pointer-events: none; }
+.ki-btn:hover { background: #FEE7D0; }
+.ki-btn.loading { opacity: 0.5; pointer-events: none; }
 
 /* Add row */
 .add-row { margin-bottom: 1.25rem; }
@@ -118,15 +118,14 @@ textarea:focus { outline: none; border-color: var(--orange); }
 .info-box {
   background: var(--orange-light); border: 1.5px solid var(--orange-mid);
   border-radius: var(--radius); padding: 14px 16px; margin-bottom: 1.25rem;
-  display: flex; flex-direction: column; gap: 12px;
+  display: flex; flex-direction: column; gap: 10px;
 }
-.info-row { display: flex; align-items: flex-start; gap: 12px; font-size: 14px; color: #92400E; line-height: 1.5; }
-.info-row i { font-size: 20px; color: var(--orange); margin-top: 1px; flex-shrink: 0; }
-.info-check {
-  width: 22px; height: 22px; border-radius: 50%;
-  background: var(--green); border: 2px solid var(--green);
-  display: flex; align-items: center; justify-content: center;
-  color: #fff; font-size: 13px; flex-shrink: 0; margin-top: 1px;
+.info-main { font-size: 14px; color: #92400E; font-weight: 500; line-height: 1.5; }
+.info-row { display: flex; align-items: center; gap: 10px; font-size: 13px; color: #92400E; line-height: 1.5; }
+.info-ki-badge {
+  flex-shrink: 0; background: var(--orange); color: #fff;
+  border-radius: 7px; padding: 3px 9px;
+  font-size: 12px; font-weight: 700; font-family: var(--font);
 }
 
 /* Buttons */
