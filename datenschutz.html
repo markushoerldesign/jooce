@@ -16,6 +16,8 @@
     .legal ul { padding-left: 1.25rem; margin: 0.5rem 0; }
     .back-btn { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; color: #6B7280; margin-bottom: 2rem; text-decoration: none; }
     .back-btn:hover { color: #F97316; }
+    .highlight { background: #FFF7ED; border: 1.5px solid #FDBA74; border-radius: 10px; padding: 12px 14px; margin: 0.75rem 0; }
+    .highlight p { margin: 0; font-size: 13px; color: #92400E; }
   </style>
 </head>
 <body>
@@ -47,30 +49,45 @@
     <li>Die von dir eingegebene Frage</li>
     <li>Die Antwortmöglichkeiten</li>
     <li>Die gewählten Antworten beider Personen (anonym, ohne Personenbezug)</li>
+    <li>Eine automatisch generierte Kategorie der Frage (z.B. "Reise", "Essen", "Freizeit")</li>
   </ul>
   <p>Es werden <strong>keine</strong> personenbezogenen Daten wie Name, E-Mail-Adresse oder IP-Adresse dauerhaft gespeichert. Es ist kein Benutzerkonto erforderlich.</p>
 
   <h2>3. Zweck der Datenspeicherung</h2>
-  <p>Die gespeicherten Daten werden ausschließlich verwendet, um den geteilten Link mit Frage und Antworten zwischen zwei Personen zu ermöglichen.</p>
-
-  <h2>4. Speicherdauer</h2>
-  <p>Die gespeicherten Fragen und Antworten werden nach 30 Tagen automatisch gelöscht.</p>
-
-  <h2>5. Drittanbieter</h2>
-  <p>jooce nutzt folgende externe Dienste:</p>
+  <p>Die gespeicherten Daten werden für folgende Zwecke verwendet:</p>
   <ul>
-    <li><strong>Supabase</strong> (Datenbank) – Server in der EU. Datenschutzerklärung: <a href="https://supabase.com/privacy" target="_blank">supabase.com/privacy</a></li>
-    <li><strong>Vercel</strong> (Hosting) – Datenschutzerklärung: <a href="https://vercel.com/legal/privacy-policy" target="_blank">vercel.com/legal/privacy-policy</a></li>
-    <li><strong>Anthropic</strong> (KI-Generierung) – wird nur bei aktiver Nutzung des KI-Buttons aufgerufen. Datenschutzerklärung: <a href="https://www.anthropic.com/privacy" target="_blank">anthropic.com/privacy</a></li>
+    <li><strong>Betrieb des Dienstes:</strong> Ermöglichung des geteilten Links zwischen zwei Personen</li>
+    <li><strong>Anonyme Statistiken:</strong> Fragen und Antworten werden automatisch kategorisiert und anonymisiert ausgewertet. Diese aggregierten, nicht personenbezogenen Statistiken können für Marktforschungszwecke verwendet oder an Dritte weitergegeben werden. Es ist zu keinem Zeitpunkt möglich, einzelne Personen zu identifizieren.</li>
   </ul>
 
-  <h2>6. Cookies</h2>
-  <p>jooce verwendet keine Tracking-Cookies. Es werden lediglich technisch notwendige Daten im Browser zwischengespeichert.</p>
+  <div class="highlight">
+    <p>Beispiel: jooce kann auswerten dass 40% aller Fragen zum Thema "Reise" gestellt wurden und die häufigste Antwort "Italien" war – ohne zu wissen wer diese Fragen gestellt hat.</p>
+  </div>
 
-  <h2>7. Deine Rechte</h2>
-  <p>Du hast das Recht auf Auskunft, Berichtigung und Löschung deiner Daten. Da keine personenbezogenen Daten gespeichert werden, ist eine Identifikation einzelner Personen nicht möglich. Bei Fragen wende dich an: <a href="mailto:markushoerl@gmx.at">markushoerl@gmx.at</a></p>
+  <h2>4. Rechtsgrundlage</h2>
+  <p>Die Verarbeitung der Daten erfolgt auf Basis von Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse). Die anonyme statistische Auswertung stellt keine Verarbeitung personenbezogener Daten im Sinne der DSGVO dar, da kein Personenbezug hergestellt werden kann.</p>
 
-  <h2>8. Änderungen</h2>
+  <h2>5. Speicherdauer</h2>
+  <p>Die gespeicherten Fragen und Antworten werden nach <strong>30 Tagen</strong> automatisch gelöscht. Anonyme, aggregierte Statistiken können dauerhaft gespeichert werden, da sie keinen Personenbezug aufweisen.</p>
+
+  <h2>6. Drittanbieter</h2>
+  <p>jooce nutzt folgende externe Dienste:</p>
+  <ul>
+    <li><strong>Supabase</strong> (Datenbank, EU-Server) – <a href="https://supabase.com/privacy" target="_blank">Datenschutzerklärung</a></li>
+    <li><strong>Vercel</strong> (Hosting) – <a href="https://vercel.com/legal/privacy-policy" target="_blank">Datenschutzerklärung</a></li>
+    <li><strong>Anthropic Claude</strong> (KI-Generierung & Kategorisierung) – wird bei Nutzung des KI-Buttons sowie automatisch zur Kategorisierung jeder Frage aufgerufen. <a href="https://www.anthropic.com/privacy" target="_blank">Datenschutzerklärung</a></li>
+  </ul>
+
+  <h2>7. Cookies</h2>
+  <p>jooce verwendet derzeit keine Tracking-Cookies. Es werden lediglich technisch notwendige Daten im Browser zwischengespeichert. Sobald Werbedienste (z.B. Google AdSense) eingesetzt werden, wird diese Datenschutzerklärung entsprechend aktualisiert und ein Cookie-Banner eingeblendet.</p>
+
+  <h2>8. Deine Rechte</h2>
+  <p>Du hast das Recht auf Auskunft, Berichtigung und Löschung deiner Daten gemäß DSGVO. Da keine personenbezogenen Daten gespeichert werden, ist eine Identifikation einzelner Personen nicht möglich. Bei Fragen wende dich an: <a href="mailto:markushoerl@gmx.at">markushoerl@gmx.at</a></p>
+
+  <h2>9. Widerspruchsrecht</h2>
+  <p>Du hast das Recht, der Verarbeitung deiner Daten für statistische Zwecke zu widersprechen. Da jedoch kein Personenbezug hergestellt werden kann, ist ein nachträglicher Widerspruch technisch nicht möglich. Durch die Nutzung von jooce stimmst du der anonymen Auswertung zu.</p>
+
+  <h2>10. Änderungen</h2>
   <p>Diese Datenschutzerklärung kann jederzeit angepasst werden. Die aktuelle Version ist stets auf dieser Seite abrufbar.</p>
 
   <p style="margin-top:2rem;color:#9CA3AF;font-size:12px;">Stand: Juni 2026</p>
