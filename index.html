@@ -4,6 +4,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>jooce.</title>
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="theme-color" content="#F97316" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="jooce" />
+  <link rel="apple-touch-icon" href="/icon-192.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
@@ -73,6 +79,20 @@
   </div>
 
 </div>
+
+<footer style="text-align:center;padding:2rem 1rem 1rem;font-size:12px;color:#9CA3AF;">
+  <a href="/impressum.html" style="color:#9CA3AF;text-decoration:none;margin:0 8px;">Impressum</a>
+  <span style="color:#E5E7EB;">·</span>
+  <a href="/datenschutz.html" style="color:#9CA3AF;text-decoration:none;margin:0 8px;">Datenschutz</a>
+</footer>
+
 <script src="/app.js"></script>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js');
+    });
+  }
+</script>
 </body>
 </html>
