@@ -66,35 +66,30 @@ function bigGlass(pct) {
   </svg>`;
 }
 
-// Answer row: [check] [input field] [KI btn]
+// Row: [answer-field: [check | input | KI]]
 function makeRow(n) {
   const row = document.createElement('div');
   row.className = 'answer-row';
   row.innerHTML = `
-    <div class="check-wrap" onclick="toggleCheck(this)" title="Meine Antwort" data-filled="0">
-      ${checkCircle(false)}
-    </div>
     <div class="answer-field">
+      <div class="check-wrap" onclick="toggleCheck(this)" title="Meine Antwort" data-filled="0">
+        ${checkCircle(false)}
+      </div>
       <input type="text" placeholder="Antwort ${n}" />
-      <button class="del-btn" onclick="delRow(this)" aria-label="Entfernen">
-        <i class="ti ti-x"></i>
-      </button>
-    </div>
-    <button class="ai-btn" onclick="genOne(this)" title="KI generiert diese Antwort">
-      <i class="ti ti-sparkles" aria-hidden="true"></i>
-    </button>`;
+      <button class="ki-btn" onclick="genOne(this)" title="KI generiert diese Antwort">KI</button>
+    </div>`;
   return row;
 }
 
-// Person B row: [check] [input field]
+// Person B row: [answer-field: [check | input]]
 function makeChoiceRow(text, origI, bSelArr, maxP) {
   const d = document.createElement('div');
   d.className = 'answer-row';
   d.innerHTML = `
-    <div class="check-wrap b-check" data-filled="0" data-idx="${origI}" title="Antwort wählen">
-      ${checkCircle(false)}
-    </div>
     <div class="answer-field">
+      <div class="check-wrap b-check" data-filled="0" data-idx="${origI}" title="Antwort wählen">
+        ${checkCircle(false)}
+      </div>
       <input type="text" value="${text}" disabled style="cursor:default;" />
     </div>`;
   d.querySelector('.b-check').onclick = function() {
@@ -137,10 +132,10 @@ function init() {
 init();
 
 async function genOne(btn) {
-  const row = btn.parentElement;
-  const input = row.querySelector('input');
+  const field = btn.parentElement;
+  const input = field.querySelector('input');
   btn.classList.add('loading');
-  btn.innerHTML = '<span class="spinning" style="font-size:14px">↻</span>';
+  btn.textContent = '↻';
   const q = document.getElementById('q-input').value.trim();
   const existing = Array.from(document.getElementById('answers-list').querySelectorAll('input'))
     .map(i => i.value.trim()).filter(Boolean);
@@ -154,7 +149,7 @@ async function genOne(btn) {
     input.value = data.answer || '';
   } catch(e) { input.value = ''; }
   btn.classList.remove('loading');
-  btn.innerHTML = '<i class="ti ti-sparkles" aria-hidden="true"></i>';
+  btn.textContent = 'KI';
   input.style.borderColor = '#F97316';
   setTimeout(() => input.style.borderColor = '', 800);
 }
