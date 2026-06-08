@@ -233,7 +233,7 @@ async function generateLink() {
     });
 
     // Kategorisierung im Hintergrund – blockiert nicht
-    categorizeInBackground(sessionId, question, answers);
+    await categorizeInBackground(sessionId, question, answers);
 
     window.location.href = `/warten/${sessionId}`;
   } catch(e) {
