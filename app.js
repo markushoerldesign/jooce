@@ -189,6 +189,33 @@ function delRow(btn) {
     btn.closest('.answer-row').remove();
 }
 
+async function categorizeInBackground(sid, q, ans) {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/hyper-worker`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_KEY}` },
+      body: JSON.stringify({ action: 'categorize', question: q, answers: ans })
+    });
+    const cat = await res.json();
+    if (cat.category) {
+      await fetch(`${SUPABASE_URL}/rest/v1/sessions?id=eq.${sid}`, {
+        method: 'PATCH',
+        headers: {
+          'apikey': SUPABASE_KEY,
+          'Authorization': `Bearer ${SUPABASE_KEY}`,
+          'Content-Type': 'application/json',
+          'Prefer': 'return=minimal'
+        },
+        body: JSON.stringify({
+          category: cat.category,
+          subcategory: cat.subcategory,
+          language: cat.language
+        })
+      });
+    }
+  } catch(e) { console.log('Kategorisierung fehlgeschlagen:', e); }
+}
+
 async function generateLink() {
   question = document.getElementById('q-input').value.trim() || 'Was möchtest du heute machen?';
   const rows = Array.from(document.getElementById('answers-list').querySelectorAll('.answer-row'));
@@ -205,19 +232,8 @@ async function generateLink() {
       body: JSON.stringify({ id: sessionId, question, answers, picks_a: myPicks, max_picks: maxPicks })
     });
 
-    // Kategorisierung im Hintergrund
-    fetch(`${SUPABASE_URL}/functions/v1/hyper-worker`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_KEY}` },
-      body: JSON.stringify({ action: 'categorize', question, answers })
-    }).then(r => r.json()).then(cat => {
-      if (cat.category) {
-        sbFetch(`sessions?id=eq.${sessionId}`, {
-          method: 'PATCH', prefer: 'return=minimal',
-          body: JSON.stringify({ category: cat.category, subcategory: cat.subcategory, language: cat.language })
-        });
-      }
-    }).catch(() => {});
+    // Kategorisierung im Hintergrund – blockiert nicht
+    categorizeInBackground(sessionId, question, answers);
 
     window.location.href = `/warten/${sessionId}`;
   } catch(e) {
