@@ -52,7 +52,7 @@ textarea:focus { outline: none; border-color: var(--orange); }
 .cnt-btn:hover { background: var(--orange-light); }
 .cnt-num { font-size: 16px; font-weight: 700; color: var(--orange); min-width: 16px; text-align: center; }
 
-/* Answer rows – everything inside one border */
+/* Answer rows */
 .answer-row { display: flex; align-items: center; margin-bottom: 10px; }
 
 .answer-field {
@@ -63,7 +63,7 @@ textarea:focus { outline: none; border-color: var(--orange); }
 }
 .answer-field:focus-within { border-color: var(--orange); }
 
-/* Check – NO right border */
+/* Check – no divider */
 .check-wrap {
   flex-shrink: 0; width: 46px; height: 44px;
   display: flex; align-items: center; justify-content: center;
@@ -80,7 +80,7 @@ textarea:focus { outline: none; border-color: var(--orange); }
 }
 .check-circle.checked { background: var(--green); border-color: var(--green); color: #fff; }
 
-/* Text input */
+/* Input */
 .answer-field input {
   flex: 1; height: 100%; padding: 0 10px;
   border: none; outline: none;
@@ -89,18 +89,17 @@ textarea:focus { outline: none; border-color: var(--orange); }
 }
 .answer-field input:disabled { color: var(--text-secondary); cursor: default; }
 
-/* KI button – white bg, orange border on left only, rounded right corners */
+/* KI button inside field – matches info badge: white, orange border all around */
 .ki-btn {
   flex-shrink: 0;
   background: #FFFFFF;
-  border: none;
-  border-left: 1.5px solid var(--orange-mid);
-  border-top-right-radius: calc(var(--radius) - 2px);
-  border-bottom-right-radius: calc(var(--radius) - 2px);
+  border: 1.5px solid var(--orange-mid);
+  border-radius: 7px;
   cursor: pointer; color: var(--orange);
-  height: 44px; width: 48px;
+  height: 28px; width: 40px;
+  margin-right: 8px;
   display: flex; align-items: center; justify-content: center;
-  font-size: 13px; font-weight: 700; font-family: var(--font);
+  font-size: 12px; font-weight: 700; font-family: var(--font);
   transition: background 0.15s;
 }
 .ki-btn:hover { background: var(--orange-light); }
@@ -116,19 +115,16 @@ textarea:focus { outline: none; border-color: var(--orange); }
 }
 .add-field:hover { border-color: var(--orange-mid); color: var(--orange); background: var(--orange-light); }
 
-/* Info box */
+/* Info box – uniform 13px, not bold */
 .info-box {
   background: var(--orange-light); border: 1.5px solid var(--orange-mid);
   border-radius: var(--radius); padding: 14px 16px; margin-bottom: 1.25rem;
   display: flex; flex-direction: column; gap: 10px;
 }
-.info-main {
-  font-size: 14px; color: #92400E; font-weight: 400; line-height: 1.5;
-}
-.info-row {
-  display: flex; align-items: center; gap: 10px;
-  font-size: 13px; color: #92400E; font-weight: 400; line-height: 1.5;
-}
+.info-main { font-size: 13px; color: #92400E; font-weight: 400; line-height: 1.5; }
+.info-row { display: flex; align-items: center; gap: 10px; font-size: 13px; color: #92400E; font-weight: 400; line-height: 1.5; }
+
+/* KI badge in info – identical to ki-btn */
 .info-ki-badge {
   flex-shrink: 0;
   background: #FFFFFF;
