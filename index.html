@@ -5,35 +5,32 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>jooce.</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
   <link rel="stylesheet" href="/style.css" />
 </head>
 <body>
 <div class="wrap" id="app">
 
-  <!-- PERSON A: ERSTELLEN -->
   <div id="phase-create">
     <div class="logo">
-      <svg width="30" height="30" viewBox="0 0 32 32" fill="none">
-        <rect x="8" y="10" width="16" height="18" rx="3" fill="#FFF3E8" stroke="#F97316" stroke-width="1.5"/>
+      <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+        <rect x="8" y="10" width="16" height="18" rx="3" fill="#FFF7ED" stroke="#F97316" stroke-width="1.5"/>
         <path d="M11 10 L10 6 L22 6 L21 10" stroke="#F97316" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
         <path d="M12 14 Q16 19 20 14" stroke="#F97316" stroke-width="1.5" stroke-linecap="round" fill="none"/>
-        <circle cx="16" cy="21" r="2" fill="#F97316" opacity="0.4"/>
+        <circle cx="16" cy="21" r="2" fill="#F97316" opacity="0.5"/>
       </svg>
       <span class="logo-text">jooce<em>.</em></span>
     </div>
 
-    <div class="section">
-      <div class="q-row">
-        <textarea id="q-input" rows="3" placeholder="Tippe deine Frage, z.B. Was möchtest du heute machen?"></textarea>
-        <div class="max-badge">
-          <span class="badge-label">Mögliche<br>Antworten</span>
-          <div class="badge-controls">
-            <button class="cnt-btn" onclick="chgCount(-1)">−</button>
-            <span class="cnt-num" id="count-num">1</span>
-            <button class="cnt-btn" onclick="chgCount(1)">+</button>
-          </div>
+    <div class="q-row">
+      <textarea id="q-input" rows="3" placeholder="Tippe deine Frage, z.B. Was möchtest du heute machen?"></textarea>
+      <div class="max-badge">
+        <span class="badge-label">Mögliche<br>Antworten</span>
+        <div class="badge-controls">
+          <button class="cnt-btn" onclick="chgCount(-1)">−</button>
+          <span class="cnt-num" id="count-num">1</span>
+          <button class="cnt-btn" onclick="chgCount(1)">+</button>
         </div>
       </div>
     </div>
@@ -41,41 +38,36 @@
     <div id="answers-list"></div>
 
     <div class="add-row">
-      <div class="add-spacer"></div>
       <div class="add-field" onclick="addRow()">
-        <i class="ti ti-plus"></i> Antwort hinzufügen
+        <i class="ti ti-plus" aria-hidden="true"></i> Antwort hinzufügen
       </div>
     </div>
 
     <div class="info-box">
       <div class="info-row">
-        <i class="ti ti-sparkles"></i>
+        <i class="ti ti-sparkles" aria-hidden="true"></i>
         <span>Generiere deine Antwort mit KI.</span>
       </div>
       <div class="info-row">
-        <svg width="16" height="18" viewBox="0 0 32 32" fill="none">
-          <rect x="8" y="10" width="16" height="18" rx="3" fill="#FFF3E8" stroke="#F97316" stroke-width="1.5"/>
-          <path d="M11 10 L10 6 L22 6 L21 10" stroke="#F97316" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-          <rect x="8" y="20" width="16" height="8" fill="#FDBA74" opacity="0.85"/>
-          <path d="M12 14 Q16 19 20 14" stroke="#F97316" stroke-width="1.5" stroke-linecap="round" fill="none"/>
-        </svg>
+        <div class="info-check">
+          <i class="ti ti-check" aria-hidden="true"></i>
+        </div>
         <span>Wähle deine Antwort. Die andere Person sieht sie nur, wenn sie die gleiche gibt.</span>
       </div>
     </div>
 
     <button class="primary-btn" id="gen-link-btn" onclick="generateLink()">
-      <i class="ti ti-link"></i> Link generieren
+      <i class="ti ti-link" aria-hidden="true"></i> Link generieren
     </button>
   </div>
 
-  <!-- PERSON B: ANTWORTEN -->
   <div id="phase-personb" style="display:none;">
     <div class="logo">
-      <svg width="30" height="30" viewBox="0 0 32 32" fill="none">
-        <rect x="8" y="10" width="16" height="18" rx="3" fill="#FFF3E8" stroke="#F97316" stroke-width="1.5"/>
+      <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+        <rect x="8" y="10" width="16" height="18" rx="3" fill="#FFF7ED" stroke="#F97316" stroke-width="1.5"/>
         <path d="M11 10 L10 6 L22 6 L21 10" stroke="#F97316" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
         <path d="M12 14 Q16 19 20 14" stroke="#F97316" stroke-width="1.5" stroke-linecap="round" fill="none"/>
-        <circle cx="16" cy="21" r="2" fill="#F97316" opacity="0.4"/>
+        <circle cx="16" cy="21" r="2" fill="#F97316" opacity="0.5"/>
       </svg>
       <span class="logo-text">jooce<em>.</em></span>
     </div>
