@@ -52,10 +52,9 @@ textarea:focus { outline: none; border-color: var(--orange); }
 .cnt-btn:hover { background: var(--orange-light); }
 .cnt-num { font-size: 16px; font-weight: 700; color: var(--orange); min-width: 16px; text-align: center; }
 
-/* Answer rows */
-.answer-row { display: flex; align-items: center; gap: 0; margin-bottom: 10px; }
+/* Answer rows – everything inside one border */
+.answer-row { display: flex; align-items: center; margin-bottom: 10px; }
 
-/* The whole answer field including check and KI inside the border */
 .answer-field {
   flex: 1; display: flex; align-items: center;
   border: 1.5px solid var(--border); border-radius: var(--radius);
@@ -64,12 +63,11 @@ textarea:focus { outline: none; border-color: var(--orange); }
 }
 .answer-field:focus-within { border-color: var(--orange); }
 
-/* Check section inside field */
+/* Check – NO right border */
 .check-wrap {
   flex-shrink: 0; width: 46px; height: 44px;
   display: flex; align-items: center; justify-content: center;
-  cursor: pointer; border-right: 1.5px solid var(--border);
-  transition: background 0.15s;
+  cursor: pointer; transition: background 0.15s;
 }
 .check-wrap:hover { background: #F9FAFB; }
 
@@ -82,7 +80,7 @@ textarea:focus { outline: none; border-color: var(--orange); }
 }
 .check-circle.checked { background: var(--green); border-color: var(--green); color: #fff; }
 
-/* Text input inside field */
+/* Text input */
 .answer-field input {
   flex: 1; height: 100%; padding: 0 10px;
   border: none; outline: none;
@@ -91,17 +89,21 @@ textarea:focus { outline: none; border-color: var(--orange); }
 }
 .answer-field input:disabled { color: var(--text-secondary); cursor: default; }
 
-/* KI button inside field */
+/* KI button – white bg, orange border on left only, rounded right corners */
 .ki-btn {
-  flex-shrink: 0; background: var(--orange-light);
-  border: none; border-left: 1.5px solid var(--orange-mid);
+  flex-shrink: 0;
+  background: #FFFFFF;
+  border: none;
+  border-left: 1.5px solid var(--orange-mid);
+  border-top-right-radius: calc(var(--radius) - 2px);
+  border-bottom-right-radius: calc(var(--radius) - 2px);
   cursor: pointer; color: var(--orange);
   height: 44px; width: 48px;
   display: flex; align-items: center; justify-content: center;
   font-size: 13px; font-weight: 700; font-family: var(--font);
   transition: background 0.15s;
 }
-.ki-btn:hover { background: #FEE7D0; }
+.ki-btn:hover { background: var(--orange-light); }
 .ki-btn.loading { opacity: 0.5; pointer-events: none; }
 
 /* Add row */
@@ -120,12 +122,20 @@ textarea:focus { outline: none; border-color: var(--orange); }
   border-radius: var(--radius); padding: 14px 16px; margin-bottom: 1.25rem;
   display: flex; flex-direction: column; gap: 10px;
 }
-.info-main { font-size: 14px; color: #92400E; font-weight: 500; line-height: 1.5; }
-.info-row { display: flex; align-items: center; gap: 10px; font-size: 13px; color: #92400E; line-height: 1.5; }
+.info-main {
+  font-size: 14px; color: #92400E; font-weight: 400; line-height: 1.5;
+}
+.info-row {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 13px; color: #92400E; font-weight: 400; line-height: 1.5;
+}
 .info-ki-badge {
-  flex-shrink: 0; background: var(--orange); color: #fff;
-  border-radius: 7px; padding: 3px 9px;
-  font-size: 12px; font-weight: 700; font-family: var(--font);
+  flex-shrink: 0;
+  background: #FFFFFF;
+  border: 1.5px solid var(--orange-mid);
+  border-radius: 7px; padding: 3px 10px;
+  font-size: 12px; font-weight: 700; color: var(--orange);
+  font-family: var(--font);
 }
 
 /* Buttons */
