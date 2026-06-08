@@ -53,6 +53,7 @@ function bigGlass(pct) {
   return `<svg width="80" height="90" viewBox="0 0 32 32" fill="none">
     <defs><clipPath id="${id}"><rect x="8" y="10" width="16" height="18" rx="3"/></clipPath></defs>
     <rect x="8" y="10" width="16" height="18" rx="3" fill="#FFF7ED" stroke="none"/>
+    <path d="M11 10 L10 6 L22 6 L21 10" stroke="#F97316" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
     ${pct > 0 ? `
       <rect x="8" y="${fillY}" width="16" height="${fillH + 1}" fill="#FDBA74" opacity="0.9" clip-path="url(#${id})"/>
       <path d="M10 ${fillY} Q16 ${fillY - 2} 22 ${fillY}" stroke="#F97316" stroke-width="0.8" stroke-linecap="round" fill="none" opacity="0.6"/>
@@ -63,11 +64,9 @@ function bigGlass(pct) {
       <circle cx="16" cy="21" r="2" fill="#F97316" opacity="0.15"/>
     `}
     <rect x="8" y="10" width="16" height="18" rx="3" fill="none" stroke="#F97316" stroke-width="1.5"/>
-    <path d="M11 10 L10 6 L22 6 L21 10" stroke="#F97316" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
   </svg>`;
 }
 
-// Row: [answer-field: [check | input | KI]]
 function makeRow(n) {
   const row = document.createElement('div');
   row.className = 'answer-row';
@@ -83,7 +82,6 @@ function makeRow(n) {
   return row;
 }
 
-// Person B row: [answer-field: [check | input]]
 function makeChoiceRow(text, origI, bSelArr, maxP) {
   const d = document.createElement('div');
   d.className = 'answer-row';
@@ -145,7 +143,7 @@ async function genOne(btn) {
     const res = await fetch(`${SUPABASE_URL}/functions/v1/hyper-worker`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_KEY}` },
-      body: JSON.stringify({ question: q, existing })
+      body: JSON.stringify({ action: 'generate', question: q, existing })
     });
     const data = await res.json();
     input.value = data.answer || '';
@@ -206,6 +204,21 @@ async function generateLink() {
       method: 'POST', prefer: 'return=minimal',
       body: JSON.stringify({ id: sessionId, question, answers, picks_a: myPicks, max_picks: maxPicks })
     });
+
+    // Kategorisierung im Hintergrund
+    fetch(`${SUPABASE_URL}/functions/v1/hyper-worker`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_KEY}` },
+      body: JSON.stringify({ action: 'categorize', question, answers })
+    }).then(r => r.json()).then(cat => {
+      if (cat.category) {
+        sbFetch(`sessions?id=eq.${sessionId}`, {
+          method: 'PATCH', prefer: 'return=minimal',
+          body: JSON.stringify({ category: cat.category, subcategory: cat.subcategory, language: cat.language })
+        });
+      }
+    }).catch(() => {});
+
     window.location.href = `/warten/${sessionId}`;
   } catch(e) {
     alert('Fehler: ' + e.message);
