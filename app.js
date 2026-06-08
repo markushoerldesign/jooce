@@ -26,9 +26,7 @@ async function sbFetch(path, options = {}) {
   return text ? JSON.parse(text) : null;
 }
 
-function makeId() {
-  return Math.random().toString(36).slice(2, 8).toUpperCase();
-}
+function makeId() { return Math.random().toString(36).slice(2, 8).toUpperCase(); }
 
 function logoHtml() {
   return `<div class="logo">
@@ -68,36 +66,38 @@ function bigGlass(pct) {
   </svg>`;
 }
 
+// Answer row: [check] [input field] [KI btn]
 function makeRow(n) {
   const row = document.createElement('div');
   row.className = 'answer-row';
   row.innerHTML = `
-    <button class="ai-btn" onclick="genOne(this)" title="KI generiert diese Antwort">
-      <i class="ti ti-sparkles" aria-hidden="true"></i>
-    </button>
+    <div class="check-wrap" onclick="toggleCheck(this)" title="Meine Antwort" data-filled="0">
+      ${checkCircle(false)}
+    </div>
     <div class="answer-field">
-      <div class="glass-check" onclick="toggleCheck(this)" title="Meine Antwort" data-filled="0">
-        ${checkCircle(false)}
-      </div>
       <input type="text" placeholder="Antwort ${n}" />
       <button class="del-btn" onclick="delRow(this)" aria-label="Entfernen">
         <i class="ti ti-x"></i>
       </button>
-    </div>`;
+    </div>
+    <button class="ai-btn" onclick="genOne(this)" title="KI generiert diese Antwort">
+      <i class="ti ti-sparkles" aria-hidden="true"></i>
+    </button>`;
   return row;
 }
 
+// Person B row: [check] [input field]
 function makeChoiceRow(text, origI, bSelArr, maxP) {
   const d = document.createElement('div');
   d.className = 'answer-row';
   d.innerHTML = `
+    <div class="check-wrap b-check" data-filled="0" data-idx="${origI}" title="Antwort wählen">
+      ${checkCircle(false)}
+    </div>
     <div class="answer-field">
-      <div class="glass-check b-glass" data-filled="0" data-idx="${origI}" title="Antwort wählen">
-        ${checkCircle(false)}
-      </div>
       <input type="text" value="${text}" disabled style="cursor:default;" />
     </div>`;
-  d.querySelector('.b-glass').onclick = function() {
+  d.querySelector('.b-check').onclick = function() {
     const filled = this.dataset.filled === '1';
     if (filled) {
       this.dataset.filled = '0';
@@ -107,7 +107,7 @@ function makeChoiceRow(text, origI, bSelArr, maxP) {
     } else {
       if (bSelArr.length >= maxP) {
         const oldIdx = bSelArr.shift();
-        const oldEl = document.querySelector(`.b-glass[data-idx="${oldIdx}"]`);
+        const oldEl = document.querySelector(`.b-check[data-idx="${oldIdx}"]`);
         if (oldEl) { oldEl.dataset.filled = '0'; oldEl.innerHTML = checkCircle(false); }
       }
       this.dataset.filled = '1';
@@ -169,7 +169,7 @@ function toggleCheck(el) {
   } else {
     if (myPicks.length >= maxPicks) {
       const old = myPicks.shift();
-      const oldEl = rows[old].querySelector('.glass-check');
+      const oldEl = rows[old].querySelector('.check-wrap');
       oldEl.dataset.filled = '0'; oldEl.innerHTML = checkCircle(false);
     }
     el.dataset.filled = '1'; el.innerHTML = checkCircle(true);
@@ -210,7 +210,7 @@ async function generateLink() {
       body: JSON.stringify({ id: sessionId, question, answers, picks_a: myPicks, max_picks: maxPicks })
     });
     window.location.href = `/warten/${sessionId}`;
-  } catch (e) {
+  } catch(e) {
     alert('Fehler: ' + e.message);
     btn.innerHTML = '<i class="ti ti-link"></i> Link generieren';
     btn.disabled = false;
@@ -332,7 +332,7 @@ function showResult(bSel) {
   matches.forEach(i => {
     matchesHtml += `
       <div class="result-match-row fadein">
-        <div class="result-glass">${checkCircle(true)}</div>
+        ${checkCircle(true)}
         <span class="result-match-text">${answers[i]}</span>
       </div>`;
   });
