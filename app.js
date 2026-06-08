@@ -221,7 +221,7 @@ function showWaiting(link, id) {
     <div class="waiting-center">
       <div class="waiting-glass">${bigGlass(0.3)}</div>
       <div class="waiting-title">Warte auf die Antwort<br>der anderen Person</div>
-      <div class="waiting-sub">Wird in <span id="poll-countdown">15</span>s neu geprüft</div>
+      <div class="waiting-sub">Wird in <span id="poll-countdown">30</span>s neu geprüft</div>
       <button class="share-btn" onclick="shareLink('${link}')">
         <i class="ti ti-share" aria-hidden="true"></i> Teilen
       </button>
@@ -246,14 +246,14 @@ function shareLink(link) {
 }
 
 function startPolling(id) {
-  let sec = 15;
+  let sec = 30;
   if (pollTimer) clearInterval(pollTimer);
   pollTimer = setInterval(async () => {
     sec--;
     const el = document.getElementById('poll-countdown');
     if (el) el.textContent = sec;
     if (sec <= 0) {
-      sec = 15;
+      sec = 30;
       const data = await sbFetch(`sessions?id=eq.${id}&select=picks_b`);
       if (data && data[0] && data[0].picks_b) {
         clearInterval(pollTimer);
